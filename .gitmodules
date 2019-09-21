@@ -1,0 +1,3 @@
+[submodule "src/Herix"]
+	path = src/Herix
+	url = https://github.com/MinusGix/Herix.git
