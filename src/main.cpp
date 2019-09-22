@@ -1296,11 +1296,10 @@ int main (int argc, char** argv) {
         std::optional<std::filesystem::path> config_file_env = getConfigPath();
 
         if (!config_file_env.has_value()) {
-            std::cout << "Could not find possible location for config file to be stored. Please set $HOME or $XDG_CONFIG_HOME The file does not need to exist.\n";
-            return 1;
+            std::cout << "Could not find config file.\n";
+        } else {
+            config_file = config_file_env.value();
         }
-
-        config_file = config_file_env.value();
     }
 
     if (locate_config) {

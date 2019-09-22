@@ -5,18 +5,31 @@
 // TODO: make this cross-platform
 std::optional<std::filesystem::path> getConfigPath () {
     std::filesystem::path file = "herixtui.lua";
+    std::filesystem::path path;
 
-    char* config = std::getenv("XDG_CONFIG_HOME");
-    if (config == nullptr) {
-        config = std::getenv("HOME");
-        if (config == nullptr) {
-            return std::nullopt;
-        } else {
-            return std::filesystem::path(std::string(config)) / ".config/" / file;
+    char* xdg_config_home = std::getenv("XDG_CONFIG_HOME");
+    char* home = std::getenv("HOME");
+
+    if (xdg_config_home != nullptr) {
+        path = std::filesystem::path(xdg_config_home) / file;
+        if (std::filesystem::exists(path)) {
+            return std::move(path);
         }
     }
 
-    return std::filesystem::path(std::string(config)) / file;
+    if (home != nullptr) {
+        path = std::filesystem::path(home) / ".config/" / file;
+        if (std::filesystem::exists(path)) {
+            return std::move(path);
+        }
+
+        path = std::filesystem::path(home) / file;
+        if (std::filesystem::exists(path)) {
+            return std::move(path);
+        }
+    }
+
+    return std::nullopt;
 }
 #include <iostream>
 std::optional<std::filesystem::path> getPluginsPath(int argc, char** argv) {
