@@ -833,6 +833,11 @@ class UIDisplay {
 
     void saveFile () {
         hex.saveHistoryDestructive();
+        invalidateCaches();
+    }
+
+    void invalidateCaches () {
+        cached_file_size = std::nullopt;
     }
 
 
