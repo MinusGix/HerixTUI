@@ -260,7 +260,11 @@ class UIDisplay {
     Herix hex;
 
     sol::protected_function on_write;
-    sol::protected_function on_tick;
+    // Callbacks which are called when we save.
+    // These are assured to be called _before_ we save, so that any special edits can happen
+    std::vector<sol::protected_function> on_save;
+
+    // TODO: add on_post_save listeners
 
 
     std::optional<size_t> cached_file_size = std::nullopt;
@@ -344,6 +348,24 @@ class UIDisplay {
     bool hasOnWrite () const {
         return static_cast<bool>(on_write);
     }
+
+    size_t onSave (sol::protected_function cb) {
+        on_save.push_back(cb);
+        return on_save.size() - 1;
+    }
+
+    void runSaveListeners () {
+        for (auto& cb : on_save) {
+            auto v = cb();
+            if (!v.valid()) {
+                logAtExit("Error in save listener!");
+                sol::error err = v;
+                throw err;
+            }
+        }
+    }
+    // TODO: add function to remove save listener
+    // TODO: add function to get save listener count
 
     bool getShouldExit () const {
         return should_exit;
@@ -692,6 +714,10 @@ class UIDisplay {
         lua.set_function("hasOnWrite", &UIDisplay::hasOnWrite, this);
         lua.set_function("runWrite", &UIDisplay::runWrite, this);
 
+        // Saving
+        lua.set_function("onSave", &UIDisplay::onSave, this);
+        lua.set_function("runSaveListeners", &UIDisplay::runSaveListeners, this);
+
         // Colors
         lua.set_function("enableColor", &ViewWindow::enableColor, &view);
         lua.set_function("disableColor", &ViewWindow::disableColor, &view);
@@ -832,6 +858,7 @@ class UIDisplay {
     }
 
     void saveFile () {
+        runSaveListeners();
         hex.saveHistoryDestructive();
         invalidateCaches();
     }
