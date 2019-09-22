@@ -34,13 +34,41 @@ local ProgramHeaderSegmentTypes = {
     [4] = "PT_NOTE", -- Auxiliary info
     [5] = "PT_SHLIB", -- reserved
     [6] = "PT_PHDR", -- segment containing program header table itself
-    [0x60000000] = "PT_LOOS",
-    [0x6FFFFFFF] = "PT_HIOS",
-    [0x70000000] = "PT_LOPROC",
-    [0x7FFFFFFF] = "PT_HIPROC"
+    [7] = "PT_TLS", -- Thread-local storage
+    [8] = "PT_NUM", -- Number of defined type
+    [0x60000000] = "PT_LOOS", -- Start of OS-Specific
+    [0x6474e550] = "PT_GNU_EH_FRAME", -- GCC .eh_frame_hdr
+    [0x6474e551] = "PT_GNU_RELRO", -- Read-only after relocation
+    [0x6ffffffa] = "PT_LOSUNW/PT_SUNWBSS", -- Sun specific
+    [0x6ffffffb] = "PT_SUNWSTACK", -- Stack segment
+    [0x6FFFFFFF] = "PT_HIOS/PT_HISUNW", -- End of os-specific
+    [0x70000000] = "PT_LOPROC", -- Start of processor specific
+    [0x7FFFFFFF] = "PT_HIPROC" -- End of processor specific
 }
 
+local ProgramHeaderFlagText = function (structure, entry)
+    local flag = fh_get_bytes_entry_value(entry)
+    local ret = ""
+    if (flag & 1) == 0 then
+        ret = ret .. "No-Exec"
+    else
+        ret = ret .. "Exec"
+    end
 
+    if (flag & (1 << 1)) == 0 then
+        ret = ret .. ",No-Write"
+    else
+        ret = ret .. ",Write"
+    end
+
+    if (flag & (1 << 2)) == 0 then
+        ret = ret .. ",No-Read"
+    else
+        ret = ret .. ",Read"
+    end
+
+    return ret
+end
 
 
 fh_register_format({
@@ -337,7 +365,7 @@ fh_register_format({
                     size = 4
                 },
                 {
-                    name = "UnknownA",
+                    name = "SegmentPhysicalAddress",
                     size = 4
                 },
                 {
@@ -349,8 +377,9 @@ fh_register_format({
                     size = 4
                 },
                 {
-                    name = "Flags", -- TODO: is this segment flags?
-                    size = 4
+                    name = "SegmentFlags",
+                    size = 4,
+                    text = ProgramHeaderFlagText,
                 },
                 {
                     name = "SegmentAlignment",
@@ -369,9 +398,10 @@ fh_register_format({
                     enum = fh_copy_table(ProgramHeaderSegmentTypes)
                 },
                 {
-                    name = "Flags",
+                    name = "SegmentFlags",
                     highlight = HighlightType.Underlined,
-                    size = 4
+                    size = 4,
+                    text = ProgramHeaderFlagText,
                 },
                 {
                     name = "SegmentOffset",
@@ -382,7 +412,7 @@ fh_register_format({
                     size = 8
                 },
                 {
-                    name = "UnknownA",
+                    name = "SegmentPhysicalAddress",
                     size = 8
                 },
                 {
