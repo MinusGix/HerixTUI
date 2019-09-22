@@ -279,7 +279,7 @@ class UIDisplay {
     }
 
 
-    UIDisplay (std::string t_filename, std::string t_config_file, std::string t_plugins_directory, bool t_debug) {
+    UIDisplay (std::filesystem::path t_filename, std::filesystem::path t_config_file, std::filesystem::path t_plugins_directory, bool t_debug) {
         debug = t_debug;
         plugins_directory = t_plugins_directory;
         config_path = t_config_file;
@@ -1254,7 +1254,7 @@ int main (int argc, char** argv) {
         return 1;
     }
 
-    std::string config_file = "";
+    std::filesystem::path config_file = "";
 
     // Allows the passing in of a config file by parameter
     if (result.count("config_file") == 1) {
@@ -1280,7 +1280,7 @@ int main (int argc, char** argv) {
             return 1;
         }
 
-        config_file = config_file_env.value().string();
+        config_file = config_file_env.value();
     }
 
     if (locate_config) {
@@ -1290,7 +1290,7 @@ int main (int argc, char** argv) {
 
 
 
-    std::string plugin_dir = "";
+    std::filesystem::path plugin_dir = "";
 
     // Allows the passing in of the plugin dir by parameter
     if (result.count("plugin_dir") == 1) {
@@ -1315,7 +1315,7 @@ int main (int argc, char** argv) {
             std::cout << "Could not find possible location for plugins to be stored. Please setup a plugins directory\n";
             // We ignore this, allowing you to start up without a plugins directory.
         } else {
-            plugin_dir = plugin_dir_found.value().string();
+            plugin_dir = plugin_dir_found.value();
         }
 
     }
@@ -1328,7 +1328,7 @@ int main (int argc, char** argv) {
 
 
 
-    std::string filename = getFilename(argc, argv);
+    std::filesystem::path filename = getFilename(argc, argv);
     // TODO: allow creation of empty file to edit in
     if (filename == "") {
         std::cout << "No file to open was specified.\n";
