@@ -237,6 +237,8 @@ class UIDisplay {
     std::filesystem::path config_path;
     std::filesystem::path plugins_directory;
 
+    bool debug = false;
+
     // Rows down. This is the row that would be at the top of the screen.
     FilePosition row_pos = 0;
     // In bytes
@@ -273,8 +275,11 @@ class UIDisplay {
     }
 
 
-    UIDisplay (std::string t_filename, std::string config_file, std::string t_plugins_directory) {
+    UIDisplay (std::string t_filename, std::string config_file, std::string t_plugins_directory, bool t_debug) {
+        debug = t_debug;
         plugins_directory = t_plugins_directory;
+
+        debugLog("Debug mode is on");
 
         lua.open_libraries(
             sol::lib::base, sol::lib::bit32, sol::lib::count, sol::lib::debug, sol::lib::ffi,
@@ -308,6 +313,12 @@ class UIDisplay {
     ~UIDisplay () {
         delwin(bar.win);
         delwin(view.win);
+    }
+
+    void debugLog (std::string val) {
+        if (debug) {
+            logAtExit(val);
+        }
     }
 
     bool getEditingPosition () const {
@@ -703,7 +714,7 @@ class UIDisplay {
         try {
             plugins = lua["plugins"];
         } catch (...) {
-            // no plugins. yay
+            debugLog("No plugins variable in configuration.");
             return;
         }
 
@@ -716,6 +727,7 @@ class UIDisplay {
                 if (plugins[plugin].get_type() == sol::type::string) {
                     // Get value
                     std::string plugin_filename = plugins[plugin].get<std::string>();
+                    debugLog("Loading plugin: '" + plugin_filename + "'");
                     // Load script, ignoring errors (hopefully)
                     lua.script_file(plugin_filename);
                 } else {
@@ -1185,9 +1197,16 @@ int main (int argc, char** argv) {
         ("locate_config", "Find where the code looks for the config")
         ("p,plugin_dir", "Set where plugins are looked for.", cxxopts::value<std::string>())
         ("locate_plugins", "Find where the code looks for plugins")
+        ("d,debug", "Turn on debug mode.")
         ;
 
     cxxopts::ParseResult result = options.parse(argc, argv);
+
+    bool debug_mode = false;
+
+    if (result.count("debug")) {
+        debug_mode = true;
+    }
 
     // Show help
     if (result.count("help")) {
@@ -1288,7 +1307,7 @@ int main (int argc, char** argv) {
 
     setupCurses();
     try {
-        UIDisplay display = UIDisplay(filename, config_file, plugin_dir);
+        UIDisplay display = UIDisplay(filename, config_file, plugin_dir, debug_mode);
 
         refresh();
 
