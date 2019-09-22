@@ -222,6 +222,18 @@ void SubView::runResize () {
 
 
 class UIDisplay {
+    private:
+    // Default configuration file used to laod the base plugins.
+    inline static const std::string DEFAULT_CONFIG =
+    "plugins = {"
+        "PLUGIN_DIR .. \"/AsciiView.lua\","
+        "PLUGIN_DIR .. \"/Offsets.lua\","
+        "PLUGIN_DIR .. \"/BaseHighlighter.lua\","
+        "PLUGIN_DIR .. \"/FileHighlighter.lua\","
+        "PLUGIN_DIR .. \"/FileHighlighter_ELF.lua\","
+        "PLUGIN_DIR .. \"/HexWrite.lua\""
+    "}";
+
     public:
     // Should be first, so it is destructed before anything that uses lua-things
     sol::state lua;
@@ -296,12 +308,18 @@ class UIDisplay {
 
         setupSimpleLua();
 
-        auto result = lua.script_file(config_path);
-        if (!result.valid()) {
-            if (result.status() == sol::call_status::file) {
-                if (std::filesystem::exists(config_path)) {
-                    // TODO: display the error
-                    exit_logs.push_back("File exists but there was a file error.\n");
+        if (config_path == "") {
+            logAtExit("Loading Default Config..");
+            lua.script(UIDisplay::DEFAULT_CONFIG);
+        } else {
+            auto result = lua.script_file(config_path);
+            if (!result.valid()) {
+                // TODO: these checks might be useless?
+                if (result.status() == sol::call_status::file) {
+                    if (std::filesystem::exists(config_path)) {
+                        // TODO: display the error
+                        exit_logs.push_back("File exists but there was a file error.\n");
+                    }
                 }
             }
         }
