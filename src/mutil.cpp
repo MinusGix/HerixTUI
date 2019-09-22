@@ -58,31 +58,31 @@ bool isStringWhitespace (const std::string& str) {
     return true;
 }
 
-char hexChr (Byte v) {
+char hexChr (HerixLib::Byte v) {
     assert(v <= 15);
 	return static_cast<char>(v + (v > 9 ? 55 : 48));
 }
-Byte hexChrToNumber (char c) {
+HerixLib::Byte hexChrToNumber (char c) {
     assert((c >= 97 && c <= 102) || (c >= 65 && c <= 70) || (c >= 48 && c <= 57));
     if (c >= 97) { // a-f
-        return static_cast<Byte>(c-87); // c-97+10
+        return static_cast<HerixLib::Byte>(c-87); // c-97+10
     } else if (c >= 65) { // A-F
-        return static_cast<Byte>(c-55); // c-65+10
+        return static_cast<HerixLib::Byte>(c-55); // c-65+10
     } else if (c >= 48) { // 0-9
-        return static_cast<Byte>(c-48);
+        return static_cast<HerixLib::Byte>(c-48);
     } else {
         assert(false);
         return 0;
     }
 }
-std::string byteToStringPadded (Byte byte) {
+std::string byteToStringPadded (HerixLib::Byte byte) {
     std::string res = "";
 	res += hexChr((byte / 16) % 16);
 	res += hexChr(byte % 16);
 	return res;
 }
 // Without padding before byte
-std::string byteToString (Byte byte) {
+std::string byteToString (HerixLib::Byte byte) {
     std::string res = "";
     char temp = hexChr((byte / 16) % 16);
     if (temp != '0') {
@@ -109,17 +109,17 @@ bool isHexadecimalCharacter (char c) {
     return isHexadecimalCharacter(static_cast<int>(c));
 }
 
-Byte clearHighestHalfByte (Byte val) {
+HerixLib::Byte clearHighestHalfByte (HerixLib::Byte val) {
     return val & 0b00001111;
 }
-Byte clearLowestHalfByte (Byte val) {
+HerixLib::Byte clearLowestHalfByte (HerixLib::Byte val) {
     return val & 0b11110000;
 }
-Byte setHighestHalfByte (Byte val, Byte num) {
+HerixLib::Byte setHighestHalfByte (HerixLib::Byte val, HerixLib::Byte num) {
     assert(num <= 0x0F);
     return clearHighestHalfByte(val) | (num * 16);
 }
-Byte setLowestHalfByte (Byte val, Byte num) {
+HerixLib::Byte setLowestHalfByte (HerixLib::Byte val, HerixLib::Byte num) {
     assert(num <= 0x0F);
     return clearLowestHalfByte(val) | num;
 }

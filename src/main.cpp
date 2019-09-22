@@ -1,5 +1,7 @@
 #include "./main.hpp"
 
+using namespace HerixLib;
+
 // Logs to show when the application exits.
 static std::vector<std::string> exit_logs;
 void logAtExit (std::string val);
