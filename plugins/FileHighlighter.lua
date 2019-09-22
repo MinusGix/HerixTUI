@@ -371,6 +371,10 @@ function highlight_get (position, effectless)
     if getSelectedPosition() == position and not effectless then
         local bar_text = tostring(ret.name)
 
+        if ret["$text"] ~= nil then
+            bar_text = bar_text .. " " .. tostring(ret["$text"])
+        end
+
         if ret.type == "enum" then
             bar_text = bar_text .. " - (" .. tostring(fh_get_enum_entry_value(ret)) .. ")"
         end
