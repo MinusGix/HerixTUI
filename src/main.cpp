@@ -279,9 +279,10 @@ class UIDisplay {
     }
 
 
-    UIDisplay (std::string t_filename, std::string config_file, std::string t_plugins_directory, bool t_debug) {
+    UIDisplay (std::string t_filename, std::string t_config_file, std::string t_plugins_directory, bool t_debug) {
         debug = t_debug;
         plugins_directory = t_plugins_directory;
+        config_path = t_config_file;
 
         debugLog("Debug mode is on");
 
@@ -293,10 +294,10 @@ class UIDisplay {
 
         setupSimpleLua();
 
-        auto result = lua.script_file(config_file);
+        auto result = lua.script_file(config_path);
         if (!result.valid()) {
             if (result.status() == sol::call_status::file) {
-                if (std::filesystem::exists(config_file)) {
+                if (std::filesystem::exists(config_path)) {
                     // TODO: display the error
                     exit_logs.push_back("File exists but there was a file error.\n");
                 }
