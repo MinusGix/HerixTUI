@@ -18,6 +18,35 @@ std::optional<std::filesystem::path> getConfigPath () {
 
     return std::filesystem::path(std::string(config)) / file;
 }
+#include <iostream>
+std::optional<std::filesystem::path> getPluginsPath(int argc, char** argv) {
+    std::filesystem::path dir = "plugins";
+
+    if (argc == 0) {
+        return std::nullopt;
+    }
+
+    std::filesystem::path executable_name = std::filesystem::path(argv[0]);
+    std::filesystem::path directory = executable_name.parent_path();
+    std::filesystem::path full_path = directory / dir;
+
+    if (std::filesystem::exists(full_path)) {
+        return std::move(full_path);
+    }
+
+    char* home_directory = std::getenv("HOME");
+
+    if (home_directory != nullptr) {
+        std::filesystem::path user_home = std::filesystem::path(home_directory);
+
+        std::filesystem::path root_location = user_home / ".herixtui/plugins/";
+        if (std::filesystem::exists(root_location)) {
+            return std::filesystem::path(root_location);
+        }
+    }
+
+    return std::nullopt;
+}
 
 // Returns whether the string is all whitespace. Returns true if string is empty.
 bool isStringWhitespace (const std::string& str) {

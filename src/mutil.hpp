@@ -8,6 +8,7 @@
 
 std::string getFilename(int argc, char** argv);
 std::optional<std::filesystem::path> getConfigPath ();
+std::optional<std::filesystem::path> getPluginsPath (int argc, char** argv);
 bool isStringWhitespace (const std::string& str);
 std::string byteToString (Byte byte);
 std::string byteToStringPadded (Byte byte);

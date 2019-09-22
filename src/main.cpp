@@ -235,6 +235,7 @@ class UIDisplay {
 
     // The config path. Changing this after the start of the program is useless since it doesn't auto-reload
     std::filesystem::path config_path;
+    std::filesystem::path plugins_directory;
 
     // Rows down. This is the row that would be at the top of the screen.
     FilePosition row_pos = 0;
@@ -272,7 +273,9 @@ class UIDisplay {
     }
 
 
-    UIDisplay (std::string t_filename, std::string config_file) {
+    UIDisplay (std::string t_filename, std::string config_file, std::string t_plugins_directory) {
+        plugins_directory = t_plugins_directory;
+
         lua.open_libraries(
             sol::lib::base, sol::lib::bit32, sol::lib::count, sol::lib::debug, sol::lib::ffi,
             sol::lib::io, sol::lib::jit, sol::lib::math, sol::lib::os, sol::lib::package,
@@ -596,6 +599,9 @@ class UIDisplay {
         lua.set_function("registerKeyHandler", &UIDisplay::registerKeyHandler, this);
         lua.set_function("removeKeyHandler", &UIDisplay::removeKeyHandler, this);
         lua.set_function("getNextKeyHandlerID", &UIDisplay::getNextKeyHandlerID, this);
+
+        // Plugin information
+        lua["PLUGIN_DIR"] = plugins_directory.string();
     }
 
     void setupLuaValues () {
@@ -685,6 +691,11 @@ class UIDisplay {
     }
 
     void loadPlugins () {
+        if (plugins_directory.empty()) {
+            // There is no plugins directory. So we ignore the set plugins.
+            return;
+        }
+
         // Arrays are just tables with ints for keys
         sol::table plugins;
 
@@ -1172,6 +1183,8 @@ int main (int argc, char** argv) {
         ("h,help", "Shows help")
         ("c,config_file", "Set where the config file is located.", cxxopts::value<std::string>())
         ("locate_config", "Find where the code looks for the config")
+        ("p,plugin_dir", "Set where plugins are looked for.", cxxopts::value<std::string>())
+        ("locate_plugins", "Find where the code looks for plugins")
         ;
 
     cxxopts::ParseResult result = options.parse(argc, argv);
@@ -1184,6 +1197,11 @@ int main (int argc, char** argv) {
 
     if (result.count("config_file") > 1) {
         std::cout << "Multiple config file locations can not be specified." << std::endl;
+        return 1;
+    }
+
+    if (result.count("plugin_dir") > 1) {
+        std::cout << "Multiple plugin directory locations can not be specified." << std::endl;
         return 1;
     }
 
@@ -1221,6 +1239,46 @@ int main (int argc, char** argv) {
         return 0;
     }
 
+
+
+    std::string plugin_dir = "";
+
+    // Allows the passing in of the plugin dir by parameter
+    if (result.count("plugin_dir") == 1) {
+        plugin_dir = result["plugin_dir"].as<std::string>();
+
+        if (isStringWhitespace(plugin_dir)) {
+            std::cout << "Plugin directory passed by argument was empty." << std::endl;
+            return 1;
+        }
+    }
+
+    bool locate_plugins = false;
+    if (result.count("locate_plugins") != 0) {
+        locate_plugins = true;
+    }
+
+    // If there's no plugin dir as a parameter we try to divine it.
+    if (plugin_dir == "") {
+        std::optional<std::filesystem::path> plugin_dir_found = getPluginsPath(argc, argv);
+
+        if (!plugin_dir_found.has_value()) {
+            std::cout << "Could not find possible location for plugins to be stored. Please setup a plugins directory\n";
+            // We ignore this, allowing you to start up without a plugins directory.
+        } else {
+            plugin_dir = plugin_dir_found.value().string();
+        }
+
+    }
+
+    if (locate_plugins) {
+        std::cout << "Plugins Directory: '" << plugin_dir << "'\n";
+        return 0;
+    }
+
+
+
+
     std::string filename = getFilename(argc, argv);
     // TODO: allow creation of empty file to edit in
     if (filename == "") {
@@ -1230,7 +1288,7 @@ int main (int argc, char** argv) {
 
     setupCurses();
     try {
-        UIDisplay display = UIDisplay(filename, config_file);
+        UIDisplay display = UIDisplay(filename, config_file, plugin_dir);
 
         refresh();
 
