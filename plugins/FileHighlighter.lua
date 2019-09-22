@@ -189,6 +189,9 @@ function fh_parse_entry (format, structure, entry, endian, offset, conf)
     elseif entry.type == "array" then
         fh_parse_entry__array(format, structure, entry, entry["$endian"], offset, conf)
     end
+
+    -- Custom display text.
+    entry["$text"] = fh_callif(fh_or(entry.text, nil), structure, entry)
 end
 function fh_parse_entry__struct (format, structure, entry, endian, offset, conf)
     entry["$structure"] = fh_copy_table(
