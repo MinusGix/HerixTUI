@@ -8,6 +8,7 @@ void logAtExit (std::string val);
 void printExitLogs ();
 
 std::filesystem::path findConfigurationFile (cxxopts::ParseResult& result);
+std::filesystem::path findPluginsDirectory (cxxopts::ParseResult& result, int argc, char** argv);
 void setupCurses ();
 void shutdownCurses ();
 
@@ -1284,37 +1285,9 @@ int main (int argc, char** argv) {
 
 
 
-    std::filesystem::path plugin_dir = "";
+    std::filesystem::path plugin_dir = findPluginsDirectory(result, argc, argv);
 
-    // Allows the passing in of the plugin dir by parameter
-    if (result.count("plugin_dir") == 1) {
-        plugin_dir = result["plugin_dir"].as<std::string>();
-
-        if (isStringWhitespace(plugin_dir)) {
-            std::cout << "Plugin directory passed by argument was empty." << std::endl;
-            return 1;
-        }
-    }
-
-    bool locate_plugins = false;
     if (result.count("locate_plugins") != 0) {
-        locate_plugins = true;
-    }
-
-    // If there's no plugin dir as a parameter we try to divine it.
-    if (plugin_dir == "") {
-        std::optional<std::filesystem::path> plugin_dir_found = getPluginsPath(argc, argv);
-
-        if (!plugin_dir_found.has_value()) {
-            std::cout << "Could not find possible location for plugins to be stored. Please setup a plugins directory\n";
-            // We ignore this, allowing you to start up without a plugins directory.
-        } else {
-            plugin_dir = plugin_dir_found.value();
-        }
-
-    }
-
-    if (locate_plugins) {
         std::cout << "Plugins Directory: '" << plugin_dir << "'\n";
         return 0;
     }
@@ -1467,6 +1440,33 @@ std::filesystem::path findConfigurationFile (cxxopts::ParseResult& result) {
     return config_file;
 }
 
+std::filesystem::path findPluginsDirectory (cxxopts::ParseResult& result, int argc, char** argv) {
+    std::filesystem::path plugin_dir = "";
+
+    // Allows the passing in of the plugin dir by parameter
+    if (result.count("plugin_dir") == 1) {
+        plugin_dir = result["plugin_dir"].as<std::string>();
+
+        if (isStringWhitespace(plugin_dir)) {
+            std::cout << "Plugin directory passed by argument was empty." << std::endl;
+            exit(1);
+        }
+    }
+
+    // If there's no plugin dir as a parameter we try to divine it.
+    if (plugin_dir == "") {
+        std::optional<std::filesystem::path> plugin_dir_found = getPluginsPath(argc, argv);
+
+        if (!plugin_dir_found.has_value()) {
+            std::cout << "Could not find possible location for plugins to be stored. Please setup a plugins directory\n";
+            // We ignore this, allowing you to start up without a plugins directory.
+        } else {
+            plugin_dir = plugin_dir_found.value();
+        }
+    }
+
+    return plugin_dir;
+}
 
 void printExitLogs () {
     for (const std::string& str : exit_logs) {
