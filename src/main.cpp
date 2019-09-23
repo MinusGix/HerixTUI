@@ -7,6 +7,7 @@ static std::vector<std::string> exit_logs;
 void logAtExit (std::string val);
 void printExitLogs ();
 
+std::filesystem::path findConfigurationFile (cxxopts::ParseResult& result);
 void setupCurses ();
 void shutdownCurses ();
 
@@ -1274,36 +1275,10 @@ int main (int argc, char** argv) {
         return 1;
     }
 
-    std::filesystem::path config_file = "";
+    std::filesystem::path config_file = findConfigurationFile(result);
 
-    // Allows the passing in of a config file by parameter
-    if (result.count("config_file") == 1) {
-        config_file = result["config_file"].as<std::string>();
-
-        if (isStringWhitespace(config_file)) {
-            std::cout << "Config file passed by argument was empty." << std::endl;
-            return 1;
-        }
-    }
-
-    bool locate_config = false;
     if (result.count("locate_config") != 0) {
-        locate_config = true;
-    }
-
-    // If there's no config file as a parameter then we try to get it from the environment variables
-    if (config_file == "") {
-        std::optional<std::filesystem::path> config_file_env = getConfigPath();
-
-        if (!config_file_env.has_value()) {
-            std::cout << "Could not find config file.\n";
-        } else {
-            config_file = config_file_env.value();
-        }
-    }
-
-    if (locate_config) {
-        std::cout << "Config file: '" << config_file << "'\n";
+        std::cout << "Config File: '" << config_file << "'\n";
         return 0;
     }
 
@@ -1463,6 +1438,33 @@ void setupCurses () {
 
 void shutdownCurses () {
     endwin();
+}
+
+std::filesystem::path findConfigurationFile (cxxopts::ParseResult& result) {
+    std::filesystem::path config_file = "";
+
+    // Allows the passing in of a config file by parameter
+    if (result.count("config_file") == 1) {
+        config_file = result["config_file"].as<std::string>();
+
+        if (isStringWhitespace(config_file)) {
+            std::cout << "Config file passed by argument was empty." << std::endl;
+            exit(1);
+        }
+    }
+
+    // If there's no config file as a parameter then we try to get it from the environment variables
+    if (config_file == "") {
+        std::optional<std::filesystem::path> config_file_env = getConfigPath();
+
+        if (!config_file_env.has_value()) {
+            std::cout << "Could not find config file.\n";
+        } else {
+            config_file = config_file_env.value();
+        }
+    }
+
+    return config_file;
 }
 
 
