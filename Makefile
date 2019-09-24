@@ -3,7 +3,7 @@
 output_folder = build
 output = $(output_folder)/program
 
-source_files = src/main.cpp src/mutil.cpp src/window.cpp src/Herix/src/herix.cpp src/Herix/src/editstorage.cpp src/Herix/src/types.cpp
+source_files = src/main.cpp src/mutil.cpp src/window.cpp src/subview.cpp src/Herix/src/herix.cpp src/Herix/src/editstorage.cpp src/Herix/src/types.cpp
 
 
 build_debug:

@@ -6,6 +6,7 @@
 
 #include <curses.h>
 #include "./mutil.hpp"
+#include "./subview.hpp"
 
 struct Window {
     WINDOW* win = nullptr;
