@@ -87,4 +87,4 @@ function on_write_selected (byte_text)
     printView(" ")
 end
 
-onWrite(base_on_write)
+listenForWrite(base_on_write)

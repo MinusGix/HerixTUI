@@ -83,11 +83,11 @@ class UIDisplay {
     bool getEditingPosition () const;
     void setEditingPosition (bool val);
 
-    void onWrite (sol::protected_function cb);
-    void runWrite (std::vector<HerixLib::Byte> data, HerixLib::FilePosition file_pos);
-    bool hasOnWrite () const;
+    void listenForWrite (sol::protected_function cb);
+    void runWriteListeners (std::vector<HerixLib::Byte> data, HerixLib::FilePosition file_pos);
+    bool hasWriteListeners () const;
 
-    size_t onSave (sol::protected_function cb);
+    size_t listenForSave (sol::protected_function cb);
 
     void runSaveListeners ();
     // TODO: add function to remove save listener

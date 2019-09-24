@@ -69,11 +69,11 @@ void UIDisplay::setEditingPosition (bool val) {
     editing_position = val;
 }
 
-void UIDisplay::onWrite (sol::protected_function cb) {
+void UIDisplay::listenForWrite (sol::protected_function cb) {
     on_write = cb;
 }
-void UIDisplay::runWrite (std::vector<HerixLib::Byte> data, HerixLib::FilePosition file_pos) {
-    if (hasOnWrite()) {
+void UIDisplay::runWriteListeners (std::vector<HerixLib::Byte> data, HerixLib::FilePosition file_pos) {
+    if (hasWriteListeners()) {
         auto v = on_write(data, data.size(), file_pos);
         if (!v.valid()) {
             logAtExit("Error in write!");
@@ -82,11 +82,11 @@ void UIDisplay::runWrite (std::vector<HerixLib::Byte> data, HerixLib::FilePositi
         }
     }
 }
-bool UIDisplay::hasOnWrite () const {
+bool UIDisplay::hasWriteListeners () const {
     return static_cast<bool>(on_write);
 }
 
-size_t UIDisplay::onSave (sol::protected_function cb) {
+size_t UIDisplay::listenForSave (sol::protected_function cb) {
     on_save.push_back(cb);
     return on_save.size() - 1;
 }
@@ -447,12 +447,12 @@ void UIDisplay::setupLuaValues () {
     lua.set_function("setEditingPosition", &UIDisplay::setEditingPosition, this);
 
     // Writing
-    lua.set_function("onWrite", &UIDisplay::onWrite, this);
-    lua.set_function("hasOnWrite", &UIDisplay::hasOnWrite, this);
-    lua.set_function("runWrite", &UIDisplay::runWrite, this);
+    lua.set_function("listenForWrite", &UIDisplay::listenForWrite, this);
+    lua.set_function("hasWriteListeners", &UIDisplay::hasWriteListeners, this);
+    lua.set_function("runWriteListeners", &UIDisplay::runWriteListeners, this);
 
     // Saving
-    lua.set_function("onSave", &UIDisplay::onSave, this);
+    lua.set_function("listenForSave", &UIDisplay::listenForSave, this);
     lua.set_function("runSaveListeners", &UIDisplay::runSaveListeners, this);
 
     // Colors
@@ -568,7 +568,7 @@ void UIDisplay::drawView () {
     HerixLib::FilePosition file_pos = getRowOffset();
     size_t max_size = static_cast<size_t>(view.getHexByteWidth()) * static_cast<size_t>(view.getHexHeight());
     std::vector<HerixLib::Byte> data = hex.readMultipleCutoff(file_pos, max_size);
-    runWrite(data, file_pos);
+    runWriteListeners(data, file_pos);
 
     for (SubView& sv : view.sub_views) {
         sv.move(0, 0);
