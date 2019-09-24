@@ -608,58 +608,58 @@ void UIDisplay::invalidateCaches () {
 // == KEY HANDLING
 // TODO: make sure all key functions are registered with lua
 
-bool UIDisplay::isExitKey (int k) {
+bool UIDisplay::isExitKey (int k) const {
     return k == 'q' || k == 'Q';
 }
-bool UIDisplay::isYesKey (int k) {
+bool UIDisplay::isYesKey (int k) const {
     return k == 'y' || key == 'Y';
 }
-bool UIDisplay::isQuestionKey (int k) {
+bool UIDisplay::isQuestionKey (int k) const {
     return k == '?';
 }
-bool UIDisplay::isUpArrow (int k) {
+bool UIDisplay::isUpArrow (int k) const {
     return k == KEY_UP;
 }
-bool UIDisplay::isUpKey (int k) {
+bool UIDisplay::isUpKey (int k) const {
     return isUpArrow(k) || k == 'k' || k == 'K';
 }
-bool UIDisplay::isDownArrow (int k) {
+bool UIDisplay::isDownArrow (int k) const {
     return k == KEY_DOWN;
 }
-bool UIDisplay::isDownKey (int k) {
+bool UIDisplay::isDownKey (int k) const {
     return isDownArrow(k) || k == 'j' || k == 'J';
 }
-bool UIDisplay::isLeftArrow(int k) {
+bool UIDisplay::isLeftArrow(int k) const {
     return k == KEY_LEFT;
 }
-bool UIDisplay::isLeftKey (int k) {
+bool UIDisplay::isLeftKey (int k) const {
     return isLeftArrow(k) || k == 'h' || k == 'H';
 }
-bool UIDisplay::isRightArrow (int k) {
+bool UIDisplay::isRightArrow (int k) const {
     return k == KEY_RIGHT;
 }
-bool UIDisplay::isRightKey (int k) {
+bool UIDisplay::isRightKey (int k) const {
     return isRightArrow(k) || k == 'l' || k == 'L';
 }
 
-bool UIDisplay::isEnterKey (int k) {
+bool UIDisplay::isEnterKey (int k) const {
     return k == KEY_ENTER || k == '\n';
 }
 
-bool UIDisplay::isSaveKey (int k) {
+bool UIDisplay::isSaveKey (int k) const {
     std::string key_name = std::string(keyname(k));
     return key_name == "^s" || key_name == "^S"; // || k == 's' || k == 'S';
 }
 
-bool UIDisplay::isEndOfFileKey (int k) {
+bool UIDisplay::isEndOfFileKey (int k) const {
     return k == 'g' || k == 'G';
 }
 
-bool UIDisplay::isPageDownkey (int k) {
+bool UIDisplay::isPageDownkey (int k) const {
     return k == KEY_NPAGE;
 }
 
-bool UIDisplay::isPageUpKey (int k) {
+bool UIDisplay::isPageUpKey (int k) const {
     return k == KEY_PPAGE;
 }
 

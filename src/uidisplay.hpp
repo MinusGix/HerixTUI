@@ -165,22 +165,22 @@ class UIDisplay {
 
 // == KEY HANDLING
     // TODO: make these all const
-    bool isExitKey (int k);
-    bool isYesKey (int k);
-    bool isQuestionKey (int k);
-    bool isUpArrow (int k);
-    bool isUpKey (int k);
-    bool isDownArrow (int k);
-    bool isDownKey (int k);
-    bool isLeftArrow(int k);
-    bool isLeftKey (int k);
-    bool isRightArrow (int k);
-    bool isRightKey (int k);
-    bool isEnterKey (int k);
-    bool isSaveKey (int k);
-    bool isEndOfFileKey (int k);
-    bool isPageDownkey (int k);
-    bool isPageUpKey (int k);
+    bool isExitKey (int k) const;
+    bool isYesKey (int k) const;
+    bool isQuestionKey (int k) const;
+    bool isUpArrow (int k) const;
+    bool isUpKey (int k) const;
+    bool isDownArrow (int k) const;
+    bool isDownKey (int k) const;
+    bool isLeftArrow(int k) const;
+    bool isLeftKey (int k) const;
+    bool isRightArrow (int k) const;
+    bool isRightKey (int k) const;
+    bool isEnterKey (int k) const;
+    bool isSaveKey (int k) const;
+    bool isEndOfFileKey (int k) const;
+    bool isPageDownkey (int k) const;
+    bool isPageUpKey (int k) const;
 
 // == EVENT HANDLING
 
