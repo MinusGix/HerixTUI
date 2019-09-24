@@ -465,7 +465,8 @@ fh_register_format({
                 },
                 {
                     name = "Flags",
-                    size = sibling_pointer_function
+                    size = sibling_pointer_function,
+                    -- TODO: Write the info the flags have!
                 },
                 {
                     name = "VirtualAddress",
