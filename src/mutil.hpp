@@ -74,6 +74,55 @@ enum class MColors {
     WHITE_WHITE=64,
 };
 
+enum class ViewLocation {
+    NONE,
+    Right,
+    Left,
+    Top,
+    Bottom,
+};
+
+
+enum class UIBarAsking {
+    NONE,
+    Message,
+    ShouldExit,
+    ShouldSave,
+};
+enum class UIState {
+    Default,
+    DefaultHelp,
+    Hex,
+    HexHelp,
+};
+enum class HexViewState {
+    Default,
+    Editing,
+};
+// Handler actions: The continued execution of handlers
+// Functional actions: Normal actions
+// Special actions: RESIZE
+// Drawing actions: Drawing to the screen
+
+// This is used as flags, so an int for KeyHandling might not (likely not) be a legitimate enum value
+// So they should stay as ints
+enum class KeyHandled {
+    FullStop = 0, // Don't do anything else. Stop handling events right after this.
+    Handler = 1, // Allow continued execution of handlers
+    Functional = 2, // Only allow functional actions
+    Special = 4, // Only allow special actions
+    Drawing = 8, // Only allow drawing actions
+    All = Handler | Functional | Special | Drawing, // Continue doing everything.
+};
+
+struct KeyHandleFlags {
+    bool handler = true;
+    bool functional = true;
+    bool special = true;
+    bool drawing = true;
+};
+
+
 std::string getFilename(int argc, char** argv);
 std::optional<std::filesystem::path> getConfigPath ();
 std::optional<std::filesystem::path> getPluginsPath (int argc, char** argv);
