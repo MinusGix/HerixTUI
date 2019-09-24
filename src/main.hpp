@@ -69,22 +69,3 @@ class SubView {
     void runRender ();
     void runResize ();
 };
-
-struct ViewWindow : public Window {
-    std::vector<SubView> sub_views;
-
-    ~ViewWindow ();
-
-    int getHexX () const;
-    int getHexY () const;
-    int getHexWidth () const;
-    int getHexHeight () const;
-
-    int getHexByteWidth () const;
-
-    int getRightWidth () const;
-    int getLeftWidth () const;
-
-    void enableColor (MColors color);
-    void disableColor (MColors color);
-};

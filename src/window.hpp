@@ -2,8 +2,10 @@
 #define FILE_SEEN_MWINDOW
 
 #include <string>
+#include <vector>
 
 #include <curses.h>
+#include "./mutil.hpp"
 
 struct Window {
     WINDOW* win = nullptr;
@@ -25,6 +27,25 @@ struct Window {
     void print (const char* str);
 
     void print (std::string str, int x_pos, bool allow_wrapping);
+};
+
+struct ViewWindow : public Window {
+    std::vector<SubView> sub_views;
+
+    ~ViewWindow ();
+
+    int getHexX () const;
+    int getHexY () const;
+    int getHexWidth () const;
+    int getHexHeight () const;
+
+    int getHexByteWidth () const;
+
+    int getRightWidth () const;
+    int getLeftWidth () const;
+
+    void enableColor (MColors color);
+    void disableColor (MColors color);
 };
 
 #endif
