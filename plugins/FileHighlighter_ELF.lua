@@ -7,8 +7,9 @@ local pointer_function = function (struct, entry)
     end
 end
 -- For use in siblings to Header, grabbing the $INIT and getting the header and getting it's bit size
-local pointer_sibling_function = function (struct, entry)
-    if fh_get_entry_enum(fh_get_struct_sibling_struct(struct, "header"), "Class") == "32-bit" then
+local sibling_pointer_function = function (struct, entry)
+    local parent = fh_get_structure_parent(struct)
+    if fh_get_enum_entry_value_be(fh_find_entry(parent, "Class")) == "32-bit" then
         return 4
     else
         return 8
@@ -426,6 +427,73 @@ fh_register_format({
                 {
                     name = "SegmentAlignment",
                     size = 8
+                }
+            }
+        },
+
+        {
+            name = "SectionHeader",
+            entries = {
+                {
+                    name = "NameIndex", -- string table index
+                    size = 4
+                },
+                {
+                    name = "Type",
+                    size = 4
+                    type = "enum",
+                    enum = {
+                        [0] = "SHT_NULL", -- entry unused
+                        [1] = "SHT_PROGBITS", -- program data
+                        [2] = "SHT_SYMTAB", -- symbol table
+                        [3] = "SHT_STRTAB", -- string table
+                        [4] = "SHT_RELA", -- relocation entries with addends
+                        [5] = "SHT_HASH", -- symbol hash table
+                        [6] = "SHT_DYNAMIC", -- dynamic linking info
+                        [7] = "SHT_NOTE", -- Notes
+                        [8] = "SHT_NOBITS", -- program space with no data (bss)
+                        [9] = "SHT_REL", -- relocation entries, no addends
+                        [10] = "SHT_SHLIB", -- reserved (?)
+                        [11] = "SHT_DYNSYM", -- Dynamic linker symbol table
+                        [14] = "SHT_INIT_ARRAY", -- Array of constructors
+                        [15] = "SHT_FINI_ARRAY", -- Array of destructors
+                        [16] = "SHT_PREINIT_ARRAY", -- Array of pre-construtors
+                        [17] = "SHT_GROUP", -- Section group
+                        [18] = "SHT_SYMTAB_SHNDX", -- Extended section indices
+                        [19] = "SHT_NUM", -- Number of defined types
+                    }
+                },
+                {
+                    name = "Flags",
+                    size = sibling_pointer_function
+                },
+                {
+                    name = "VirtualAddress",
+                    size = sibling_pointer_function
+                },
+                {
+                    name = "FileOffset",
+                    size = sibling_pointer_function,
+                },
+                {
+                    name = "Size", -- in bytes
+                    size = sibling_pointer_function
+                },
+                {
+                    name = "Link", -- to another section
+                    size = 4
+                },
+                {
+                    name = "Info", -- Additional information
+                    size = 4
+                },
+                {
+                    name = "Alignment",
+                    size = sibling_pointer_function
+                },
+                {
+                    name = "EntrySize", -- Entry size if section holds table
+                    size = sibling_pointer_function
                 }
             }
         }
