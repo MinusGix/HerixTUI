@@ -2,11 +2,6 @@
 
 using namespace HerixLib;
 
-// Logs to show when the application exits.
-static std::vector<std::string> exit_logs;
-void logAtExit (std::string val);
-void printExitLogs ();
-
 std::filesystem::path findConfigurationFile (cxxopts::ParseResult& result);
 std::filesystem::path findPluginsDirectory (cxxopts::ParseResult& result, int argc, char** argv);
 void setupCurses ();
@@ -1379,18 +1374,4 @@ std::filesystem::path findPluginsDirectory (cxxopts::ParseResult& result, int ar
     }
 
     return plugin_dir;
-}
-
-void printExitLogs () {
-    for (const std::string& str : exit_logs) {
-        std::cout << str << std::endl;
-    }
-
-    if (exit_logs.size() == 0) {
-        std::cout << "Exited." << std::endl;
-    }
-}
-
-void logAtExit (std::string val) {
-    exit_logs.push_back(val);
 }

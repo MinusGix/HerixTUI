@@ -141,4 +141,9 @@ HerixLib::Byte setLowestHalfByte (HerixLib::Byte val, HerixLib::Byte num);
 bool isDisplayableCharacter (int c);
 bool isDisplayableCharacter (char c);
 
+// Logs to show when the application exits.
+static std::vector<std::string> exit_logs;
+void logAtExit (std::string val);
+void printExitLogs ();
+
 #endif

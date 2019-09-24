@@ -143,3 +143,17 @@ bool isDisplayableCharacter (int c) {
 bool isDisplayableCharacter (char c) {
     return isDisplayableCharacter(static_cast<int>(c));
 }
+
+void printExitLogs () {
+    for (const std::string& str : exit_logs) {
+        std::cout << str << std::endl;
+    }
+
+    if (exit_logs.size() == 0) {
+        std::cout << "Exited." << std::endl;
+    }
+}
+
+void logAtExit (std::string val) {
+    exit_logs.push_back(val);
+}
