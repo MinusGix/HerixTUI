@@ -440,7 +440,7 @@ fh_register_format({
                 },
                 {
                     name = "Type",
-                    size = 4
+                    size = 4,
                     type = "enum",
                     enum = {
                         [0] = "SHT_NULL", -- entry unused
