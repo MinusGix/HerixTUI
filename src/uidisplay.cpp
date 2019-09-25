@@ -755,13 +755,9 @@ void UIDisplay::handlePageDownMovement () {
     if (sel_pos + page_size < getFileSize()) {
         // This is a bit of a hacky method to make the our cursor be at the top when we page down
         // Go double the page length (since we aren't accessing anything it doesn't matter if we go outside the file)
-        logAtExit("Sel_pos: " + std::to_string(sel_pos));
-        logAtExit("Page size: " + std::to_string(page_size));
-        logAtExit("File Size: " + std::to_string(getFileSize()));
         sel_pos += page_size * 2;
         updateRowPosition();
         sel_pos -= page_size;
-        logAtExit("Sel_pos2: " + std::to_string(sel_pos));
     } else {
         handleJumpEndOfFile();
     }
