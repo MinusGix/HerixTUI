@@ -97,6 +97,9 @@ int main (int argc, char** argv) {
 
         refresh();
 
+        // This could be done in the UIDisplay constructor, but I find it more palatable to do it explicitly.
+        display.handleInit();
+
         while (true) {
             display.key = getch();
             display.handleEvent();

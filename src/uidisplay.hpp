@@ -186,6 +186,7 @@ class UIDisplay {
 
     KeyHandleFlags handleKeyHandlers ();
 
+    void handleInit ();
     void handleEvent ();
 
     void handleDownKeyMovement ();

@@ -707,6 +707,10 @@ KeyHandleFlags UIDisplay::handleKeyHandlers () {
     return key_handle;
 }
 
+void UIDisplay::handleInit () {
+    handleDrawing();
+}
+
 void UIDisplay::handleEvent () {
     KeyHandleFlags key_handle = handleKeyHandlers();
 
