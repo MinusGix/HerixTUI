@@ -667,6 +667,14 @@ bool UIDisplay::isPageUpKey (int k) const {
     return k == KEY_PPAGE;
 }
 
+bool UIDisplay::isEndKey (int k) const {
+    return k == KEY_END || k == KEY_SEND;
+}
+
+bool UIDisplay::isHomeKey (int k) const {
+    return k == KEY_HOME || k == KEY_SHOME;
+}
+
 // == EVENT HANDLING
 
 KeyHandleFlags UIDisplay::handleKeyHandlers () {
@@ -810,6 +818,29 @@ void UIDisplay::handleJumpEndOfFile () {
     sel_pos = getFileSize() - 1;
 }
 
+void UIDisplay::handleJumpEndOfLine () {
+    HerixLib::FilePosition hex_byte_width = static_cast<HerixLib::FilePosition>(view.getHexByteWidth());
+
+    if (hex_byte_width == 0) {
+        sel_pos = 0;
+    } else {
+        sel_pos = (hex_byte_width - (sel_pos % hex_byte_width)) + sel_pos - 1;
+    }
+
+    if (sel_pos >= getFileSize()) {
+        sel_pos = getFileSize() - 1;
+    }
+}
+void UIDisplay::handleJumpStartOfLine () {
+    HerixLib::FilePosition hex_byte_width = static_cast<HerixLib::FilePosition>(view.getHexByteWidth());
+
+    if (hex_byte_width == 0) {
+        sel_pos = 0;
+    } else {
+        sel_pos = sel_pos - (sel_pos % hex_byte_width);
+    }
+}
+
 void UIDisplay::updateRowPosition () {
     HerixLib::FilePosition byte_count = static_cast<HerixLib::FilePosition>(view.getHexByteWidth());
     HerixLib::FilePosition hex_view_rows = static_cast<HerixLib::FilePosition>(view.getHexHeight());
@@ -906,6 +937,10 @@ void UIDisplay::handleFunctionalHex () {
             handleSave();
         } else if (isEndOfFileKey(key)) {
             handleJumpEndOfFile();
+        } else if (isEndKey(key)) {
+            handleJumpEndOfLine();
+        } else if (isHomeKey(key)) {
+            handleJumpStartOfLine();
         }
 
         updateRowPosition();
@@ -932,6 +967,10 @@ void UIDisplay::handleFunctionalHex () {
             handleSave();
         } else if (isEndOfFileKey(key)) {
             handleJumpEndOfFile();
+        } else if (isEndKey(key)) {
+            handleJumpEndOfLine();
+        } else if (isHomeKey(key)) {
+            handleJumpStartOfLine();
         }
 
         updateRowPosition();

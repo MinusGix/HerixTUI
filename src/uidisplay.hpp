@@ -182,6 +182,8 @@ class UIDisplay {
     bool isEndOfFileKey (int k) const;
     bool isPageDownkey (int k) const;
     bool isPageUpKey (int k) const;
+    bool isEndKey (int k) const;
+    bool isHomeKey (int k) const;
 
 // == EVENT HANDLING
 
@@ -207,6 +209,9 @@ class UIDisplay {
     void handleRightKeyEditingMovement ();
 
     void handleJumpEndOfFile ();
+
+    void handleJumpEndOfLine ();
+    void handleJumpStartOfLine ();
 
     void updateRowPosition ();
 
