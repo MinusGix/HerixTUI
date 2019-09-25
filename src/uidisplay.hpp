@@ -145,6 +145,7 @@ class UIDisplay {
     void setupLuaValues ();
 
     void loadPlugins ();
+    void loadPlugin (const std::string& filename);
 
     void setupBar ();
 

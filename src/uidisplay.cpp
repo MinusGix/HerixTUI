@@ -372,6 +372,7 @@ void UIDisplay::setupSimpleLua () {
 
     // Plugin information
     lua["PLUGIN_DIR"] = plugins_directory.string();
+    lua.set_function("loadPlugin", &UIDisplay::loadPlugin, this);
 }
 
 void UIDisplay::setupLuaValues () {
@@ -490,9 +491,7 @@ void UIDisplay::loadPlugins () {
             if (plugins[plugin].get_type() == sol::type::string) {
                 // Get value
                 std::string plugin_filename = plugins[plugin].get<std::string>();
-                debugLog("Loading plugin: '" + plugin_filename + "'");
-                // Load script, ignoring errors (hopefully)
-                lua.script_file(plugin_filename);
+                loadPlugin(plugin_filename);
             } else {
                 exit_logs.push_back("Couldn't load plugin in plugin list as it's value was not a string.");
             }
@@ -500,6 +499,11 @@ void UIDisplay::loadPlugins () {
             exit_logs.push_back("Had issues getting plugin value. This is probably an issue in the hex editor. Please report");
         }
     }
+}
+/// Takes the FULL path of the plugin.
+void UIDisplay::loadPlugin (const std::string& plugin_filename) {
+    debugLog("Loading plugin: '" + plugin_filename + "'");
+    lua.script_file(plugin_filename);
 }
 
 void UIDisplay::setupBar () {
