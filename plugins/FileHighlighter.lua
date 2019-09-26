@@ -368,7 +368,7 @@ function highlight_get (position, effectless)
         return highlighter.base_highlight_type
     end
 
-    if getSelectedPosition() == position and not effectless then
+    if getSelectedPosition() == position and not effectless and getBarMessage() == "" then
         local bar_text = tostring(ret.name)
 
         if ret["$text"] ~= nil then
