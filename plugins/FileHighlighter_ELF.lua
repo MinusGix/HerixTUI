@@ -9,7 +9,8 @@ end
 -- For use in siblings to Header, grabbing the $INIT and getting the header and getting it's bit size
 local sibling_pointer_function = function (struct, entry)
     local parent = fh_get_structure_parent(struct)
-    if fh_get_enum_entry_value_be(fh_find_entry(parent, "Class")) == "32-bit" then
+    local header = fh_get_entry__struct(fh_find_entry(parent, "header"))
+    if fh_get_enum_entry_value_be(fh_find_entry(header, "Class")) == "32-bit" then
         return 4
     else
         return 8
@@ -139,8 +140,41 @@ fh_register_format({
                         )
                         return program_offset
                     end
+                },
+                {
+                    name = "sectionheadertable",
+                    type = "array",
+                    elements = function (structure, entry)
+                        local header_struct = fh_get_entry__struct(fh_find_entry(structure, "header"))
+                        return fh_get_bytes_entry_value(
+                            fh_find_entry(header_struct, "SectionHeaderTableEntries")
+                        )
+                    end,
+                    endian = function (structure, entry)
+                        local header_struct = fh_get_entry__struct(fh_find_entry(structure, "header"))
+                        local endian_value = fh_get_enum_entry_value(
+                            fh_find_entry(header_struct, "Endian")
+                        )
+
+                        if endian_value == "Little-Endian" then
+                            return "Little"
+                        else
+                            return "Big"
+                        end
+                    end,
+                    array = {
+                        type = "struct",
+                        struct = "SectionHeader"
+                    },
+                    offset = function (structure, entry)
+                        local header_struct = fh_get_entry__struct(fh_find_entry(structure, "header"))
+                        local program_offset = fh_get_bytes_entry_value(
+                            fh_find_entry(header_struct, "SectionHeaderTableOffset")
+                        )
+                        return program_offset
+                    end
                 }
-            }
+            },
         },
 
         {
@@ -330,12 +364,12 @@ fh_register_format({
                     endian = header_endian,
                 },
                 {
-                    name = "SectionTableEntrySize",
+                    name = "SectionHeaderTableEntrySize",
                     size = 2,
                     endian = header_endian,
                 },
                 {
-                    name = "SectionTableEntries",
+                    name = "SectionHeaderTableEntries",
                     size = 2,
                     endian = header_endian,
                 },
@@ -436,7 +470,8 @@ fh_register_format({
             entries = {
                 {
                     name = "NameIndex", -- string table index
-                    size = 4
+                    size = 4,
+                    highlight = HighlightType.Color_BLACK_RED
                 },
                 {
                     name = "Type",
@@ -466,7 +501,52 @@ fh_register_format({
                 {
                     name = "Flags",
                     size = sibling_pointer_function,
-                    -- TODO: Write the info the flags have!
+                    text = function (struct, entry)
+                        local flag = fh_get_bytes_entry_value(entry)
+                        local ret = ""
+
+                        if (flag & 1) then
+                            ret = ret .. "Writable"
+                        end
+
+                        if (flag & (1 << 1)) then
+                            ret = ret .. ",Alloc"
+                        end
+
+                        if (flag & (1 << 2)) then
+                            ret = ret .. ",Exec"
+                        end
+
+                        if (flag & (1 << 4)) then
+                            ret = ret .. ",Merge"
+                        end
+
+                        if (flag & (1 << 5)) then
+                            ret = ret .. ",Strings"
+                        end
+
+                        if (flag & (1 << 6)) then
+                            ret = ret .. ",InfoLink"
+                        end
+
+                        if (flag & (1 << 7)) then
+                            ret = ret .. ",LinkOrder"
+                        end
+
+                        if (flag & (1 << 8)) then
+                            ret = ret .. ",NonStd"
+                        end
+
+                        if (flag & (1 << 9)) then
+                            ret = ret .. ",Group"
+                        end
+
+                        if (flag & (1 << 11)) then
+                            ret = ret .. ",Compress"
+                        end
+
+                        return ret
+                    end
                 },
                 {
                     name = "VirtualAddress",
@@ -495,6 +575,163 @@ fh_register_format({
                 {
                     name = "EntrySize", -- Entry size if section holds table
                     size = sibling_pointer_function
+                }
+            }
+        },
+
+        -- TODO there is almost assuredly some flags for 32/64 symbolentry that aren't here.
+        {
+            name = "SymbolEntry32",
+            entries = {
+                {
+                    name = "Name", -- string table index
+                    size = 4
+                },
+                {
+                    name = "Value",
+                    size = 4
+                },
+                {
+                    name = "Size",
+                    size = 4
+                },
+                {
+                    name = "Info", -- type and binding
+                    size = 1
+                },
+                {
+                    name = "Other", -- Visibility
+                    size = 1
+                },
+                {
+                    name = "SectionIndex",
+                    size = 2
+                }
+            },
+        },
+        {
+            name = "SymbolEntry64",
+            entries = {
+                {
+                    name = "Name", -- String table index
+                    size = 4,
+                },
+                {
+                    name = "Info", -- type and binding
+                    size = 1
+                },
+                {
+                    name = "Other", -- visiblity
+                    size = 1
+                },
+                {
+                    name = "SectionIndex",
+                    size = 2
+                },
+                {
+                    name = "Value",
+                    size = 8
+                },
+                {
+                    name = "Size",
+                    size = 8
+                }
+            }
+        },
+
+        {
+            name = "Relocation",
+            entries = {
+                {
+                    name = "Offset", -- address
+                    size = sibling_pointer_function
+                },
+                {
+                    name = "Info", -- reloc type and symbol index
+                    size = sibling_pointer_function
+                }
+            }
+        },
+
+        {
+            name = "RelocationAddend",
+            entries = {
+                {
+                    name = "Offset", -- address
+                    size = sibling_pointer_function
+                },
+                {
+                    name = "Info", -- reloc type and symbol index
+                    size = sibling_pointer_function
+                },
+                {
+                    name = "Addend",
+                    size = sibling_pointer_function
+                }
+            }
+        },
+
+        {
+            name = "Dynamic",
+            entries = {
+                {
+                    name = "Tag",
+                    size = sibling_pointer_function
+                },
+                {
+                    -- Union, tag decides what it is
+                    -- Value: represents ints with various interpretations
+                    -- Pointer: represents program virtual addresses (??)
+                    name = "Value/Pointer",
+                    size = sibling_pointer_function
+                }
+            }
+        },
+
+        {
+            name = "Notes",
+            entries = {
+                {
+                    name = "NameSize",
+                    size = 4
+                },
+                {
+                    name = "DescSize",
+                    size = 4,
+                },
+                {
+                    name = "Type",
+                    size = 4
+                },
+                {
+                    name = "Name",
+                    size = function (structure, entry)
+                        local size = fh_find_entry(structure, "NameSize")
+                        return fh_get_bytes_entry_value(size)
+                    end,
+                    text = function (structure, entry)
+                        local bytes = fh_get_bytes_entry_bytes(fh_find_entry(structure, "NameSize"))
+                        local ret = ""
+                        for index=1, #bytes do
+                            ret = ret + string.char(bytes[index])
+                        end
+                        return ret
+                    end
+                },
+                {
+                    name = "Desc",
+                    size = function (structure, entry)
+                        local size = fh_find_entry(structure, "DescSize")
+                        return fh_get_bytes_entry_value(size)
+                    end,
+                    text = function (structure, entry)
+                        local bytes = fh_get_bytes_entry_bytes(fh_find_entry(structure, "DescSize"))
+                        local ret = ""
+                        for index=1, #bytes do
+                            ret = ret + string.char(bytes[index])
+                        end
+                        return ret
+                    end
                 }
             }
         }
