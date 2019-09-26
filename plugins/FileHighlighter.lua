@@ -411,7 +411,11 @@ function fh_choose_format ()
         if v.verifier() then
             fh_data.chosen_format = k
             logAtExit("Chose format {" .. tostring(k) .. "}")
-            fh_parse_format(fh_get_chosen_format())
+            local format = fh_get_chosen_format()
+            if type(format.on_chosen) == "function" then
+                format.on_chosen()
+            end
+            fh_parse_format(format)
             return
         end
     end
