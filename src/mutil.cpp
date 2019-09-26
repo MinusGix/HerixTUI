@@ -144,6 +144,15 @@ bool isDisplayableCharacter (char c) {
     return isDisplayableCharacter(static_cast<int>(c));
 }
 
+// I wouldn't use these because ncurses, or perhaps just both of the terminals I use, 
+// don't seem to work with the extended characters properly
+bool isDisplayableCharacterLenient (int c) {
+    return (c >= 32 && c <= 126) || (c >= 161 && c <= 255);
+}
+bool isDisplayableCharacterLenient (unsigned char c) {
+    return isDisplayableCharacterLenient(static_cast<int>(c));
+}
+
 void printExitLogs () {
     for (const std::string& str : exit_logs) {
         std::cout << str << std::endl;
