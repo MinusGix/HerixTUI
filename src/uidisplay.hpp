@@ -82,6 +82,8 @@ class UIDisplay {
     std::vector<sol::protected_function> on_undo;
     std::vector<sol::protected_function> on_redo;
 
+    std::vector<sol::protected_function> on_init;
+
 
     std::optional<size_t> cached_file_size = std::nullopt;
     bool should_edit_move_forward = true;
@@ -99,6 +101,8 @@ class UIDisplay {
 
     bool getEditingPosition () const;
     void setEditingPosition (bool val);
+
+    void listenForInit (sol::protected_function cb);
 
     void registerInfo (std::string name, sol::function cb);
     void deregisterInfo (std::string name);

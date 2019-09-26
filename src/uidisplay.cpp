@@ -82,6 +82,10 @@ void UIDisplay::deregisterInfo (std::string name) {
     information_notes.erase(ret);
 }
 
+void UIDisplay::listenForInit (sol::protected_function cb) {
+    on_init.push_back(cb);
+}
+
 void UIDisplay::listenForWrite (sol::protected_function cb) {
     on_write = cb;
 }
@@ -407,6 +411,8 @@ void UIDisplay::setupLuaValues () {
     lua.set_function("redoEdit", &UIDisplay::redo, this);
     lua.set_function("listenForUndo", &UIDisplay::listenForUndo, this);
     lua.set_function("listenForRedo", &UIDisplay::listenForRedo, this);
+
+    lua.set_function("listenForInit", &UIDisplay::listenForInit, this);
 
     // Configuration
     lua.set_function("getShouldEditMoveForward", &UIDisplay::getShouldEditMoveForward, this);
@@ -797,6 +803,13 @@ KeyHandleFlags UIDisplay::handleKeyHandlers () {
 }
 
 void UIDisplay::handleInit () {
+    for (auto& item : on_init) {
+        item();
+    }
+
+    // Clear on_init because it's never going to be called again.
+    on_init.clear();
+
     handleDrawing();
 }
 
