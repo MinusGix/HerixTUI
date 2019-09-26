@@ -140,7 +140,7 @@ HerixLib::Byte setLowestHalfByte (HerixLib::Byte val, HerixLib::Byte num) {
 bool isDisplayableCharacter (int c) {
     return c >= 32 && c <= 126;
 }
-bool isDisplayableCharacter (char c) {
+bool isDisplayableCharacter (unsigned char c) {
     return isDisplayableCharacter(static_cast<int>(c));
 }
 
