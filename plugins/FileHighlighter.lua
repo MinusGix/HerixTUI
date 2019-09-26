@@ -152,7 +152,10 @@ function fh_parse_structure (format, structure, endian, offset, conf)
     structure["$contig_size"] = 0
     structure["$endian"] = fh_callif(fh_or(structure.endian, endian), structure)
 
-    --offset = structure["$offset"]
+    if type(structure.pre) == "function" then
+        structure.pre(structure, endian, offset, conf)
+    end
+
     for index=1, #structure.entries do
         local entry = structure.entries[index]
         fh_parse_entry(format, structure, entry, structure["$endian"], offset, conf)
@@ -172,11 +175,19 @@ function fh_parse_structure (format, structure, endian, offset, conf)
         end
         offset = entry["$offset"] + entry_size
     end
+
+    if type(structure.post) == "function" then
+        structure.post(structure, endian, offset, conf)
+    end
 end
 function fh_parse_entry (format, structure, entry, endian, offset, conf)
     entry["$offset"] = fh_callif(fh_or(entry.offset, offset), structure, entry)
     entry["$parent_structure"] = structure
     entry["$endian"] = fh_callif(fh_or(entry.endian, endian), structure, entry)
+
+    if type(entry.pre) == "function" then
+        entry.pre(structure, entry, endian, offset, conf)
+    end
 
     if entry.type == "struct" then
         fh_parse_entry__struct(format, structure, entry, entry["$endian"], offset, conf)
@@ -192,6 +203,10 @@ function fh_parse_entry (format, structure, entry, endian, offset, conf)
 
     -- Custom display text.
     entry["$text"] = fh_callif(fh_or(entry.text, nil), structure, entry)
+
+    if type(entry.post) == "function" then
+        entry.post(structure, entry, endian, offset, conf)
+    end
 end
 function fh_parse_entry__struct (format, structure, entry, endian, offset, conf)
     entry["$structure"] = fh_copy_table(
