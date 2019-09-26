@@ -6,6 +6,14 @@
 #include "./window.hpp"
 #include "./subview.hpp"
 
+struct InformationNote {
+    std::string name;
+    sol::protected_function text_func;
+
+    InformationNote (std::string t_name, sol::protected_function t_text_func) :
+        name(t_name), text_func(t_text_func) {}
+};
+
 class UIDisplay {
     private:
     // Default configuration file used to laod the base plugins.
@@ -58,6 +66,12 @@ class UIDisplay {
 
     HerixLib::Herix hex;
 
+    std::vector<InformationNote> information_notes;
+    std::string current_information_text = "";
+    size_t information_selected = 0;
+    // Used for scrolling in InfoAsking and Info
+    size_t information_row_pos = 0;
+
     sol::protected_function on_write;
     // Callbacks which are called when we save.
     // These are assured to be called _before_ we save, so that any special edits can happen
@@ -82,6 +96,9 @@ class UIDisplay {
 
     bool getEditingPosition () const;
     void setEditingPosition (bool val);
+
+    void registerInfo (std::string name, sol::function cb);
+    void deregisterInfo (std::string name);
 
     void listenForWrite (sol::protected_function cb);
     void runWriteListeners (std::vector<HerixLib::Byte> data, HerixLib::FilePosition file_pos);
@@ -223,11 +240,17 @@ class UIDisplay {
 
     void handleFunctionalHex ();
 
+    void handleFunctionalInfoAsking ();
+
+    void handleFunctionalInfo ();
+
     void handleFunctional ();
 
     void handleSpecial ();
 
     void handleDrawing ();
+    void drawInfoAsking ();
+    void drawInfo ();
 };
 
 #endif

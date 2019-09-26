@@ -69,6 +69,19 @@ void UIDisplay::setEditingPosition (bool val) {
     editing_position = val;
 }
 
+void UIDisplay::registerInfo (std::string name, sol::function cb) {
+    information_notes.push_back(InformationNote(name, cb));
+}
+void UIDisplay::deregisterInfo (std::string name) {
+    auto ret = std::find_if(information_notes.begin(), information_notes.end(),
+        [&name](const InformationNote& x) {
+            return name == x.name;
+        }
+    );
+
+    information_notes.erase(ret);
+}
+
 void UIDisplay::listenForWrite (sol::protected_function cb) {
     on_write = cb;
 }
@@ -244,9 +257,9 @@ void UIDisplay::setupSimpleLua () {
     );
     lua.new_enum("UIState",
         "Default", UIState::Default,
-        "DefaultHelp", UIState::DefaultHelp,
         "Hex", UIState::Hex,
-        "HexHelp", UIState::HexHelp
+        "InfoAsking", UIState::InfoAsking,
+        "Info", UIState::Info
     );
     lua.new_enum("HexViewState",
         "Default", HexViewState::Default,
@@ -446,6 +459,10 @@ void UIDisplay::setupLuaValues () {
 
     lua.set_function("getEditingPosition", &UIDisplay::getEditingPosition, this);
     lua.set_function("setEditingPosition", &UIDisplay::setEditingPosition, this);
+
+    // Information-Handling
+    lua.set_function("registerInfo", &UIDisplay::registerInfo, this);
+    lua.set_function("deregisterInfo", &UIDisplay::deregisterInfo, this);
 
     // Writing
     lua.set_function("listenForWrite", &UIDisplay::listenForWrite, this);
@@ -871,8 +888,6 @@ void UIDisplay::handleFunctionalDefault () {
     if (isExitKey(key)) {
         should_exit = true;
         return;
-    } else if (isQuestionKey(key)) {
-        state = UIState::DefaultHelp;
     }
 }
 
@@ -897,7 +912,9 @@ void UIDisplay::handleFunctionalHex () {
             // Reset back to 0.
             editing_position = false;
         } else if (isQuestionKey(key)) {
-            state = UIState::HexHelp;
+            state = UIState::InfoAsking;
+            information_selected = 0;
+            information_row_pos = 0;
         } else if (isDownKey(key)) {
             handleDownKeyMovement();
         } else if (isUpKey(key)) {
@@ -944,7 +961,9 @@ void UIDisplay::handleFunctionalHex () {
         if (isExitKey(key)) {
             bar_asking = UIBarAsking::ShouldExit;
         } else if (isQuestionKey(key)) {
-            state = UIState::HexHelp;
+            state = UIState::InfoAsking;
+            information_selected = 0;
+            information_row_pos = 0;
         } else if (isDownKey(key)) {
             handleDownKeyMovement();
         } else if (isUpKey(key)) {
@@ -973,11 +992,57 @@ void UIDisplay::handleFunctionalHex () {
     }
 }
 
+void UIDisplay::handleFunctionalInfoAsking () {
+    if (isExitKey(key)) {
+            state = UIState::Hex;
+    } else if (isDownKey(key)) {
+        information_selected++;
+        if (information_selected >= information_notes.size()) {
+            information_selected = 0;
+        }
+    } else if (isUpKey(key)) {
+        if (information_selected == 0) {
+            if (information_notes.size() == 0) {
+                information_selected = 0;
+            } else {
+                information_selected = information_notes.size() - 1;
+            }
+        } else {
+            information_selected--;
+        }
+    } else if (isEnterKey(key)) {
+        if (information_selected < information_notes.size()) {
+            state = UIState::Info;
+            information_row_pos = 0;
+            current_information_text = information_notes.at(information_selected).text_func();
+        }
+    }
+
+    // TODO: not that nice of a scrolling method, should be more like how the hexview manages it
+    information_row_pos = information_selected;
+}
+
+void UIDisplay::handleFunctionalInfo () {
+    if (isExitKey(key)) {
+        state = UIState::Hex;
+    } else if (isDownKey(key)) {
+        information_row_pos++;
+    } else if (isUpKey(key)) {
+        if (information_row_pos > 0) {
+            information_row_pos--;
+        }
+    }
+}
+
 void UIDisplay::handleFunctional () {
     if (state == UIState::Default) {
         handleFunctionalDefault();
     } else if (state == UIState::Hex) {
         handleFunctionalHex();
+    } else if (state == UIState::InfoAsking) {
+        handleFunctionalInfoAsking();
+    } else if (state == UIState::Info) {
+        handleFunctionalInfo();
     }
 }
 
@@ -991,8 +1056,50 @@ void UIDisplay::handleSpecial () {
 void UIDisplay::handleDrawing () {
     if (state == UIState::Default) {
         drawBar();
+    } else if (state == UIState::InfoAsking) {
+        drawInfoAsking();
+        drawBar();
+    } else if (state == UIState::Info) {
+        drawInfo();
+        drawBar();
     } else if (state == UIState::Hex) {
         drawView();
         drawBar();
     }
+}
+
+void UIDisplay::drawInfoAsking () {
+    werase(view.win);
+
+    for (size_t i = information_row_pos; i < std::min(information_row_pos+static_cast<size_t>(view.height), information_notes.size()); i++) {
+        const InformationNote& item = information_notes.at(i);
+        if (information_selected == i) {
+            wattron(view.win, WA_STANDOUT);
+        }
+
+        view.print(item.name);
+        if (information_selected == i) {
+            wattroff(view.win, WA_STANDOUT);
+        }
+
+        view.print("\n");
+    }
+
+
+    wrefresh(view.win);
+}
+
+void UIDisplay::drawInfo () {
+    werase(view.win);
+
+    for (size_t i = information_row_pos*static_cast<size_t>(view.width); i < current_information_text.size(); i++) {
+        char ch = current_information_text[i];
+        if (isDisplayableCharacter(ch)) {
+            waddch(view.win, static_cast<unsigned int>(ch));
+        } else {
+            waddch(view.win, static_cast<unsigned int>('?'));
+        }
+    }
+
+    wrefresh(view.win);
 }
