@@ -403,6 +403,9 @@ void UIDisplay::setupLuaValues () {
     lua.set_function("clearBarMessage", &UIDisplay::clearBarMessage, this);
     lua.set_function("getBarMessage", &UIDisplay::getBarMessage, this);
 
+    lua.set_function("undoEdit", &UIDisplay::undo, this);
+    lua.set_function("redoEdit", &UIDisplay::redo, this);
+
     // Configuration
     lua.set_function("getShouldEditMoveForward", &UIDisplay::getShouldEditMoveForward, this);
     lua.set_function("setShouldEditMoveForward", &UIDisplay::setShouldEditMoveForward, this);
@@ -625,6 +628,37 @@ void UIDisplay::invalidateCaches () {
     cached_file_size = std::nullopt;
 }
 
+void UIDisplay::undo (bool dialog) {
+    HerixLib::UndoInfo info = hex.undo();
+    if (info.wasSuccess()) {
+        auto& item = info.undone.value();
+        sel_pos = item.pos;
+        if (dialog) {
+            setBarMessage("Undid " + std::to_string(item.data.size()) + " bytes.");
+        }
+    } else {
+        if (dialog) {
+            setBarMessage("Could not undo.");
+        }
+    }
+}
+
+void UIDisplay::redo (bool dialog) {
+    HerixLib::RedoInfo info = hex.redo();
+    if (info.wasSuccess()) {
+        auto& item = info.undone.value();
+        sel_pos = item.pos;
+
+        if (dialog) {
+            setBarMessage("Redid " + std::to_string(item.data.size()) + " bytes.");
+        }
+    } else {
+        if (dialog) {
+            setBarMessage("Could not redo.");
+        }
+    }
+}
+
 
 // == KEY HANDLING
 // TODO: make sure all key functions are registered with lua
@@ -690,6 +724,15 @@ bool UIDisplay::isEndKey (int k) const {
 
 bool UIDisplay::isHomeKey (int k) const {
     return k == KEY_HOME || k == KEY_SHOME;
+}
+
+bool UIDisplay::isUndoKey (int k) const {
+    std::string key_name = std::string(keyname(k));
+    return key_name == "u" || key_name == "U" || key_name == "^z" || key_name == "^Z";
+}
+bool UIDisplay::isRedoKey (int k) const {
+    std::string key_name = std::string(keyname(k));
+    return key_name == "r" || key_name == "R" || key_name == "^y" || key_name == "^Y";
 }
 
 // == EVENT HANDLING
@@ -954,6 +997,10 @@ void UIDisplay::handleFunctionalHex () {
             handleJumpEndOfLine();
         } else if (isHomeKey(key)) {
             handleJumpStartOfLine();
+        } else if (isUndoKey(key)) {
+            undo(true);
+        } else if (isRedoKey(key)) {
+            redo(true);
         }
 
         updateRowPosition();
@@ -986,6 +1033,10 @@ void UIDisplay::handleFunctionalHex () {
             handleJumpEndOfLine();
         } else if (isHomeKey(key)) {
             handleJumpStartOfLine();
+        } else if (isUndoKey(key)) {
+            undo(true);
+        } else if (isRedoKey(key)) {
+            redo(true);
         }
 
         updateRowPosition();

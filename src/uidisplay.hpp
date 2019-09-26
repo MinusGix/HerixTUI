@@ -179,6 +179,9 @@ class UIDisplay {
 
     void saveFile ();
 
+    void undo (bool dialog=false);
+    void redo (bool dialog=false);
+
     void invalidateCaches ();
 
 // == KEY HANDLING
@@ -201,6 +204,8 @@ class UIDisplay {
     bool isPageUpKey (int k) const;
     bool isEndKey (int k) const;
     bool isHomeKey (int k) const;
+    bool isUndoKey (int k) const;
+    bool isRedoKey (int k) const;
 
 // == EVENT HANDLING
 
