@@ -405,6 +405,8 @@ void UIDisplay::setupLuaValues () {
 
     lua.set_function("undoEdit", &UIDisplay::undo, this);
     lua.set_function("redoEdit", &UIDisplay::redo, this);
+    lua.set_function("listenForUndo", &UIDisplay::listenForUndo, this);
+    lua.set_function("listenForRedo", &UIDisplay::listenForRedo, this);
 
     // Configuration
     lua.set_function("getShouldEditMoveForward", &UIDisplay::getShouldEditMoveForward, this);
@@ -628,6 +630,13 @@ void UIDisplay::invalidateCaches () {
     cached_file_size = std::nullopt;
 }
 
+void UIDisplay::listenForUndo (sol::protected_function cb) {
+    on_undo.push_back(cb);
+}
+void UIDisplay::listenForRedo (sol::protected_function cb) {
+    on_redo.push_back(cb);
+}
+
 void UIDisplay::undo (bool dialog) {
     HerixLib::UndoInfo info = hex.undo();
     if (info.wasSuccess()) {
@@ -635,6 +644,10 @@ void UIDisplay::undo (bool dialog) {
         sel_pos = item.pos;
         if (dialog) {
             setBarMessage("Undid " + std::to_string(item.data.size()) + " bytes.");
+        }
+
+        for (auto& cb : on_undo) {
+            cb(item.pos);
         }
     } else {
         if (dialog) {
@@ -651,6 +664,10 @@ void UIDisplay::redo (bool dialog) {
 
         if (dialog) {
             setBarMessage("Redid " + std::to_string(item.data.size()) + " bytes.");
+        }
+
+        for (auto& cb : on_redo) {
+            cb(item.pos);
         }
     } else {
         if (dialog) {

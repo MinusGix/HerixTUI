@@ -79,6 +79,9 @@ class UIDisplay {
 
     // TODO: add on_post_save listeners
 
+    std::vector<sol::protected_function> on_undo;
+    std::vector<sol::protected_function> on_redo;
+
 
     std::optional<size_t> cached_file_size = std::nullopt;
     bool should_edit_move_forward = true;
@@ -181,6 +184,9 @@ class UIDisplay {
 
     void undo (bool dialog=false);
     void redo (bool dialog=false);
+
+    void listenForUndo (sol::protected_function cb);
+    void listenForRedo (sol::protected_function cb);
 
     void invalidateCaches ();
 

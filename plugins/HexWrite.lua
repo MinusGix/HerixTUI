@@ -21,6 +21,14 @@ function hw_byte_to_string (byte)
 end
 
 local prev_state = getHexViewState()
+local requires_rehighlight = false
+
+listenForUndo(function (pos)
+    requires_rehighlight = true
+end)
+listenForRedo(function (pos)
+    requires_rehighlight = true
+end)
 
 function base_on_write (data, size, position)
     local byte_entries_col = getHexByteWidth()
@@ -38,7 +46,10 @@ function base_on_write (data, size, position)
         func_on_write = on_write_selected
     end
 
-    highlight_update(position, size, prev_state == HexViewState.Editing and hex_view_state ~= HexViewState.Editing)
+    highlight_update(position, size, requires_rehighlight or
+        (prev_state == HexViewState.Editing and hex_view_state ~= HexViewState.Editing)
+    )
+    requires_rehighlight = false
     prev_state = hex_view_state
 
     fh_highlight_get_load_screen()
