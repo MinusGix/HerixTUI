@@ -139,9 +139,7 @@ HerixLib::Byte setHighestHalfByte (HerixLib::Byte val, HerixLib::Byte num);
 HerixLib::Byte setLowestHalfByte (HerixLib::Byte val, HerixLib::Byte num);
 
 bool isDisplayableCharacter (int c);
-bool isDisplayableCharacter (unsigned char c);
 bool isDisplayableCharacterLenient (int c);
-bool isDisplayableCharacterLenient (unsigned char c);
 
 // Logs to show when the application exits.
 static std::vector<std::string> exit_logs;

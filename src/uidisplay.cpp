@@ -380,6 +380,9 @@ void UIDisplay::setupSimpleLua () {
     lua.set_function("setHighestHalfByte", setHighestHalfByte);
     lua.set_function("setLowestHalfByte", setLowestHalfByte);
 
+    lua.set_function("isDisplayableCharacter", isDisplayableCharacter);
+    lua.set_function("isDisplayableCharacterLenient", isDisplayableCharacterLenient);
+
     // Information
     lua.set_function("getConfigPath", &UIDisplay::getConfigPath, this);
 

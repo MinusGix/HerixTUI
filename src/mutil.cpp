@@ -140,17 +140,11 @@ HerixLib::Byte setLowestHalfByte (HerixLib::Byte val, HerixLib::Byte num) {
 bool isDisplayableCharacter (int c) {
     return c >= 32 && c <= 126;
 }
-bool isDisplayableCharacter (unsigned char c) {
-    return isDisplayableCharacter(static_cast<int>(c));
-}
 
-// I wouldn't use these because ncurses, or perhaps just both of the terminals I use, 
+// I wouldn't use this because ncurses, or perhaps just both of the terminals I use, 
 // don't seem to work with the extended characters properly
 bool isDisplayableCharacterLenient (int c) {
     return (c >= 32 && c <= 126) || (c >= 161 && c <= 255);
-}
-bool isDisplayableCharacterLenient (unsigned char c) {
-    return isDisplayableCharacterLenient(static_cast<int>(c));
 }
 
 void printExitLogs () {
