@@ -104,9 +104,9 @@ function fh_initialize_entry__array (format, struct, entry, conf)
     conf.require_name = false
     conf.array_element = true
 
-    if entry.elements == nil then
+    if entry.elements == nil and entry.size_limit == nil then
         error("File Highlighter: {" .. tostring(format.name) .. "} structure named " .. tostring(struct.name) .. "\n" ..
-            "Has array entry with no elements field named " .. tostring(entry.name) .. ".")
+            "Has array entry with no elements/size_limit field named " .. tostring(entry.name) .. ".")
     end
 
     if entry.array == nil then
@@ -227,6 +227,7 @@ end
 function fh_parse_entry__array (format, structure, entry, offset, conf)
     entry["$size"] = 0
     entry["$contig_size"] = 0
+    entry["$size_limit"] = fh_callif(entry.size_limit, structure, entry)
     entry["$elements"] = fh_callif(entry.elements, structure, entry)
     entry["$data"] = {}
 
@@ -234,7 +235,25 @@ function fh_parse_entry__array (format, structure, entry, offset, conf)
 
     -- TODO: add checks
 
-    for index=1, entry["$elements"] do
+    -- Rather than a for loop we use this, because the condition is a bit complex..
+    local index = 0
+    while true do
+        -- If we go over the size limit, we stop
+        if entry["$size_limit"] ~= nil then
+            if entry["$size"] >= entry["$size_limit"] then
+                entry["$elements"] = index
+                break
+            end
+        end
+
+        index = index + 1
+
+        if entry["$elements"] ~= nil then
+            if index > entry["$elements"] then
+                break
+            end
+        end
+
         local a_entry = fh_copy_table(entry["array"])
         entry["$data"][index] = a_entry
         a_entry["$array"] = entry
