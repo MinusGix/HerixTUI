@@ -23,10 +23,57 @@ local header_endian = function (structure, entry)
     if endian_value == "Little-Endian" then
         return "Little"
     else
-        logAtExit("\tAAA")
         return "Big"
     end
 end
+
+local sibling_endian = function (structure, entry)
+    local header_struct = fh_get_entry__struct(fh_find_entry(structure, "header"))
+    local endian_value = fh_get_enum_entry_value(
+        fh_find_entry(header_struct, "Endian")
+    )
+
+    if endian_value == "Little-Endian" then
+        return "Little"
+    else
+        return "Big"
+    end
+end
+
+-- Yeah, this isn't perfect looking when displayed, but eh, it works good enough for now
+-- TODO: make this display nicer
+local FlagBuilder = function (num, flags)
+    local ret = ""
+    for index=1, #flags do
+        if num & flags[index][1] then
+            ret = ret .. flags[index][2]
+        end
+    end
+    return ret
+end
+
+local InverseFlagBuilder = function (num, flags)
+    local ret = ""
+    for index=1, #flags do
+        if (num & flags[index][1]) == 0 then
+            ret = ret .. flags[index][2]
+        end
+    end
+    return ret
+end
+
+local BoolFlagBuilder = function (num, flags)
+    local ret = ""
+    for index=1, #flags do
+        if (num & flags[index][1]) then
+            ret = ret .. flags[index][2]
+        else
+            ret = ret .. flags[index][3]
+        end
+    end
+    return ret
+end
+
 
 local ProgramHeaderSegmentTypes = {
     [0] = "PT_NULL", -- entry unused
@@ -50,28 +97,12 @@ local ProgramHeaderSegmentTypes = {
 
 local ProgramHeaderFlagText = function (structure, entry)
     local flag = fh_get_bytes_entry_value(entry)
-    local ret = ""
-    if (flag & 1) == 0 then
-        ret = ret .. "No-Exec"
-    else
-        ret = ret .. "Exec"
-    end
-
-    if (flag & (1 << 1)) == 0 then
-        ret = ret .. ",No-Write"
-    else
-        ret = ret .. ",Write"
-    end
-
-    if (flag & (1 << 2)) == 0 then
-        ret = ret .. ",No-Read"
-    else
-        ret = ret .. ",Read"
-    end
-
-    return ret
+    return BoolFlagBuilder(flag, {
+        {1, "Exec", "No-Exec"},
+        {1 << 1, ",Write", ",No-Write"},
+        {1 << 2, ",No-Read", ",Read"}
+    })
 end
-
 
 fh_register_format({
     name = "base_ELF",
@@ -106,18 +137,7 @@ fh_register_format({
                             fh_find_entry(header_struct, "ProgramHeaderTableEntries")
                         )
                     end,
-                    endian = function (structure, entry)
-                        local header_struct = fh_get_entry__struct(fh_find_entry(structure, "header"))
-                        local endian_value = fh_get_enum_entry_value(
-                            fh_find_entry(header_struct, "Endian")
-                        )
-
-                        if endian_value == "Little-Endian" then
-                            return "Little"
-                        else
-                            return "Big"
-                        end
-                    end,
+                    endian = sibling_endian,
                     array = { -- an entry of what it is made up of.
                         type = "struct",
                         struct = function (structure, entry) -- struct would be $INIT, entry would be itself
@@ -150,18 +170,7 @@ fh_register_format({
                             fh_find_entry(header_struct, "SectionHeaderTableEntries")
                         )
                     end,
-                    endian = function (structure, entry)
-                        local header_struct = fh_get_entry__struct(fh_find_entry(structure, "header"))
-                        local endian_value = fh_get_enum_entry_value(
-                            fh_find_entry(header_struct, "Endian")
-                        )
-
-                        if endian_value == "Little-Endian" then
-                            return "Little"
-                        else
-                            return "Big"
-                        end
-                    end,
+                    endian = sibling_endian,
                     array = {
                         type = "struct",
                         struct = "SectionHeader"
@@ -173,6 +182,126 @@ fh_register_format({
                         )
                         return program_offset
                     end
+                },
+
+                -- These are structures which may or may not exist
+                -- Arrays in the loosest sense, they are positioned wherever in the file
+                -- It'd be nice to make these kindof "Dynamic" entries be a part of the base
+                --  File highlighter but I don't think that's going to happen yet.
+                {
+                    name = "notes",
+                    type = "array",
+                    endian = sibling_endian,
+                    elements = function (structure, entry)
+                        local phdr = fh_find_entry(structure, "programheadertable")
+
+                        entry["$user_notes"] = {}
+                        for index=1, #phdr["$data"] do
+                            local p_entry = phdr["$data"][index]
+                            local p_struct = fh_get_entry__struct(p_entry)
+                            local p_type = fh_get_enum_entry_value(fh_find_entry(p_struct, "SegmentType"))
+                            if p_type == "PT_NOTE" then
+                                table.insert(entry["$user_notes"], p_struct)
+                            end
+                        end
+                        return #entry["$user_notes"]
+                    end,
+                    array = {
+                        type = "struct",
+                        struct = "Notes",
+                        offset = function (structure, entry)
+                            local index = entry["$array_index"]
+                            local ind_struct = entry["$array"]["$user_notes"][index]
+
+                            return fh_get_bytes_entry_value(fh_find_entry(ind_struct, "SegmentOffset"))
+                        end
+                    }
+                },
+
+                {
+                    name = "symboltable",
+                    type = "array",
+                    endian = sibling_endian,
+                    elements = function (structure, entry)
+                        local sections = fh_find_entry(structure, "sectionheadertable")
+
+                        entry["$user_symbols"] = {}
+                        for index=1, #sections["$data"] do
+                            local s_entry = sections["$data"][index]
+                            local s_struct = fh_get_entry__struct(s_entry)
+                            local s_type = fh_get_enum_entry_value(fh_find_entry(s_struct, "Type"))
+                            if s_type == "SHT_SYMTAB" then
+                                table.insert(entry["$user_symbols"], s_struct)
+                            end
+                        end
+                        return #entry["$user_symbols"]
+                    end,
+                    array = {
+                        type = "array",
+                        elements = function (structure, entry)
+                            local index = entry["$array_index"]
+                            local ind_struct = entry["$array"]["$user_symbols"][index]
+                            -- Offset is 0, so no elements.
+                            if fh_get_bytes_entry_value(fh_find_entry(ind_struct, "FileOffset")) == 0 then
+                                return 0
+                            end
+
+                            return fh_get_bytes_entry_value(fh_find_entry(ind_struct, "Size")) //
+                                fh_get_bytes_entry_value(fh_find_entry(ind_struct, "EntrySize"))
+                        end,
+                        array = {
+                            type = "struct",
+                            struct = function (structure, entry)
+                                local bitsize = fh_get_enum_entry_value(
+                                    fh_find_entry(
+                                        fh_get_entry__struct(fh_find_entry(structure, "header")),
+                                        "Class"
+                                ))
+
+                                if bitsize == "32-bit" then
+                                    return "SymbolEntry32"
+                                else
+                                    return "SymbolEntry64"
+                                end
+                            end,
+                        },
+                        offset = function (structure, entry)
+                            local index = entry["$array_index"]
+                            local ind_struct = entry["$array"]["$user_symbols"][index]
+
+                            return fh_get_bytes_entry_value(fh_find_entry(ind_struct, "FileOffset"))
+                        end
+                    }
+                },
+
+                {
+                    name = "stringtables",
+                    type = "array",
+                    elements = function (structure, entry)
+                        local sections = fh_find_entry(structure, "sectionheadertable")
+
+                        entry["$user_strings"] = {}
+                        for index=1, #sections["$data"] do
+                            local s_entry = sections["$data"][index]
+                            local s_struct = fh_get_entry__struct(s_entry)
+                            local s_type = fh_get_enum_entry_value(fh_find_entry(s_struct, "Type"))
+                            if s_type == "SHT_STRTAB" then
+                                table.insert(entry["$user_strings"], s_struct)
+                            end
+                        end
+                        return #entry["$user_strings"]
+                    end,
+                    array = {
+                        type = "struct",
+                        struct = "StringTable",
+                        offset = function (structure, entry)
+                            local index = entry["$array_index"]
+                            local ind_struct = entry["$array"]["$user_strings"][index]
+
+                            return fh_get_bytes_entry_value(fh_find_entry(ind_struct, "FileOffset"))
+                        end
+                    },
+                    endian = sibling_endian
                 }
             },
         },
@@ -503,49 +632,18 @@ fh_register_format({
                     size = sibling_pointer_function,
                     text = function (struct, entry)
                         local flag = fh_get_bytes_entry_value(entry)
-                        local ret = ""
-
-                        if (flag & 1) then
-                            ret = ret .. "Writable"
-                        end
-
-                        if (flag & (1 << 1)) then
-                            ret = ret .. ",Alloc"
-                        end
-
-                        if (flag & (1 << 2)) then
-                            ret = ret .. ",Exec"
-                        end
-
-                        if (flag & (1 << 4)) then
-                            ret = ret .. ",Merge"
-                        end
-
-                        if (flag & (1 << 5)) then
-                            ret = ret .. ",Strings"
-                        end
-
-                        if (flag & (1 << 6)) then
-                            ret = ret .. ",InfoLink"
-                        end
-
-                        if (flag & (1 << 7)) then
-                            ret = ret .. ",LinkOrder"
-                        end
-
-                        if (flag & (1 << 8)) then
-                            ret = ret .. ",NonStd"
-                        end
-
-                        if (flag & (1 << 9)) then
-                            ret = ret .. ",Group"
-                        end
-
-                        if (flag & (1 << 11)) then
-                            ret = ret .. ",Compress"
-                        end
-
-                        return ret
+                        return FlagBuilder(flag, {
+                            {1, "Writable"},
+                            {1 << 1, ",Alloc"},
+                            {1 << 2, ",Exec"},
+                            {1 << 4, ",Merge"},
+                            {1 << 5, ",Strings"},
+                            {1 << 6, ",InfoLink"},
+                            {1 << 7, ",LinkOrder"},
+                            {1 << 8, ",NonStd"},
+                            {1 << 9, ",Group"},
+                            {1 << 11, ",Compress"}
+                        })
                     end
                 },
                 {
@@ -585,7 +683,8 @@ fh_register_format({
             entries = {
                 {
                     name = "Name", -- string table index
-                    size = 4
+                    size = 4,
+                    highlight = HighlightType.Color_YELLOW_GREEN
                 },
                 {
                     name = "Value",
@@ -615,6 +714,7 @@ fh_register_format({
                 {
                     name = "Name", -- String table index
                     size = 4,
+                    highlight = HighlightType.Color_YELLOW_GREEN
                 },
                 {
                     name = "Info", -- type and binding
@@ -693,7 +793,8 @@ fh_register_format({
             entries = {
                 {
                     name = "NameSize",
-                    size = 4
+                    size = 4,
+                    highlight = HighlightType.Color_BLACK_GREEN
                 },
                 {
                     name = "DescSize",
@@ -701,7 +802,16 @@ fh_register_format({
                 },
                 {
                     name = "Type",
-                    size = 4
+                    size = 4,
+                    type = "enum",
+                    -- TODO: these aren't entirely accurate in all cases...
+                    enum = {
+                        [1] = "?GNU_ABI_TAG",
+                        [2] = "?GNU_HWCAP",
+                        [3] = "?GNU_BUILD_ID",
+                        [4] = "?GNU_GOLD_VERSION",
+                        [5] = "?GNU_PROPERTY_TYPE_0" -- ?I'm insure if this is a valid value based on what it says
+                    }
                 },
                 {
                     name = "Name",
@@ -710,12 +820,18 @@ fh_register_format({
                         return fh_get_bytes_entry_value(size)
                     end,
                     text = function (structure, entry)
-                        local bytes = fh_get_bytes_entry_bytes(fh_find_entry(structure, "NameSize"))
+                        local bytes = fh_get_bytes_entry_bytes(fh_find_entry(structure, "Name"))
                         local ret = ""
                         for index=1, #bytes do
-                            ret = ret + string.char(bytes[index])
+                            if isDisplayableCharacter(bytes[index]) then
+                                ret = ret .. string.char(bytes[index])
+                            elseif bytes[index] == 0 then
+                                ret = ret .. "\\0"
+                            else
+                                ret = ret .. "."
+                            end
                         end
-                        return ret
+                        return "'" .. ret .. "'"
                     end
                 },
                 {
@@ -725,13 +841,60 @@ fh_register_format({
                         return fh_get_bytes_entry_value(size)
                     end,
                     text = function (structure, entry)
-                        local bytes = fh_get_bytes_entry_bytes(fh_find_entry(structure, "DescSize"))
+                        local bytes = fh_get_bytes_entry_bytes(fh_find_entry(structure, "Desc"))
                         local ret = ""
                         for index=1, #bytes do
-                            ret = ret + string.char(bytes[index])
+                            if isDisplayableCharacter(bytes[index]) then
+                                ret = ret .. string.char(bytes[index])
+                            elseif bytes[index] == 0 then
+                                ret = ret .. "\\0"
+                            else
+                                ret = ret .. "."
+                            end
                         end
-                        return ret
+                        return "'" .. ret .. "'"
                     end
+                }
+            }
+        },
+
+        {
+            name = "StringTable",
+            entries = {
+                {
+                    name = "BeginningNull",
+                    size = 1,
+                },
+                {
+                    name = "Strings",
+                    type = "array",
+                    array = {
+                        type = "struct",
+                        struct = "StringTableEntry"
+                    },
+                    size_limit = function (structure, entry)
+                        local index = structure["$entry"]["$array_index"]
+                        local ind_struct = structure["$entry"]["$array"]["$user_strings"][index]
+
+                        if fh_get_bytes_entry_value(fh_find_entry(ind_struct, "FileOffset")) == 0 then
+                            return 0
+                        end
+
+                        return fh_get_bytes_entry_value(fh_find_entry(ind_struct, "Size")) - 1
+                    end,
+                },
+                {
+                    name = "EndingNull",
+                    size = 1
+                }
+            }
+        },
+        {
+            name = "StringTableEntry",
+            entries = {
+                {
+                    name = "StringEntry",
+                    type = "string-null"
                 }
             }
         }
