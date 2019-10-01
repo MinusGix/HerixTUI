@@ -88,6 +88,8 @@ function fh_initialize_entry (format, struct, entry, conf)
         fh_initialize_entry__enum(format, struct, entry, conf)
     elseif entry.type == "string-null" then
         fh_initialize_entry__string_null(format, struct, entry, conf)
+    elseif entry.type == "string" then
+        fh_initialize_entry__string(format, struct, entry, conf)
     elseif entry.type == "bytes" or entry.type == "padding" then
         fh_initialize_entry__data(format, struct, entry, conf)
     else
@@ -122,6 +124,9 @@ function fh_initialize_entry__enum (format, struct, entry, conf)
             "Has enum entry with no enum field named " .. tostring(entry.name) .. ".")
     end
 
+    fh_initialize_entry__data(format, struct, entry, conf)
+end
+function fh_initialize_entry__string (format, struct, entry, conf)
     fh_initialize_entry__data(format, struct, entry, conf)
 end
 function fh_initialize_entry__string_null (format, struct, entry, conf)
@@ -201,6 +206,8 @@ function fh_parse_entry (format, structure, entry, endian, offset, conf)
         fh_parse_entry__bytes(format, structure, entry, entry["$endian"], offset, conf)
     elseif entry.type == "string-null" then
         fh_parse_entry__string_null(format, structure, entry, entry["$endian"], offset, conf)
+    else if entry.type == "string" then
+        fh_parse_entry__string(format, structure, entry, entry["$endian"], offset, conf)
     elseif entry.type == "padding" then
         fh_parse_entry__padding(format, structure, entry, entry["$endian"], offset, conf)
     elseif entry.type == "enum" then
@@ -278,6 +285,25 @@ end
 function fh_parse_entry__enum (format, structure, entry, endian, offset, conf)
     fh_parse_entry___data(format, structure, entry, entry["$endian"], offset, conf)
     entry["$enum"] = fh_callif(entry.enum, structure, entry)
+end
+function fh_parse_entry__string (format, structure, entry, endian, offset, conf)
+    fh_parse_entry___data(format, structure, entry, endian, offset, conf)
+
+    if entry.text == nil then
+        entry.text = function (struct, entry)
+            local ret = "'"
+            local bytes = readBytes(entry["$offset"], entry["$size"])
+            for index=1, #bytes do
+                local byte = bytes[index]
+                if isDisplayableCharacter(byte) then
+                    ret = ret .. string.char(byte0)
+                else
+                    ret = ret .. "."
+                end
+            end
+            return ret .. "'"
+        end
+    end
 end
 function fh_parse_entry__string_null (format, structure, entry, endian, offset, conf)
     -- We ignore the size from this
@@ -374,7 +400,8 @@ function fh_get_highlight_entry (format, structure, entry, position, conf)
     -- Note: entry is not assured to be a direct child of structure, as it might be from an array.
     -- But it is assured to be a child eventually of the structure.
 
-    if entry.type == "bytes" or entry.type == "padding" or entry.type == "enum" or entry.type == "string-null" then
+    if entry.type == "bytes" or entry.type == "padding" or entry.type == "enum" or entry.type == "string-null"
+        or entry.type == "string" then
         return fh_get_highlight_entry__data(format, structure, entry, position, conf)
     elseif entry.type == "array" then
         return fh_get_highlight_entry__array(format, structure, entry, position, conf)
