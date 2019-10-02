@@ -206,7 +206,7 @@ function fh_parse_entry (format, structure, entry, endian, offset, conf)
         fh_parse_entry__bytes(format, structure, entry, entry["$endian"], offset, conf)
     elseif entry.type == "string-null" then
         fh_parse_entry__string_null(format, structure, entry, entry["$endian"], offset, conf)
-    else if entry.type == "string" then
+    elseif entry.type == "string" then
         fh_parse_entry__string(format, structure, entry, entry["$endian"], offset, conf)
     elseif entry.type == "padding" then
         fh_parse_entry__padding(format, structure, entry, entry["$endian"], offset, conf)
