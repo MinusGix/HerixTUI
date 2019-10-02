@@ -45,6 +45,8 @@ class UIDisplay {
     std::filesystem::path plugins_directory;
 
     bool debug = false;
+    // If it should be quick to exit on issues.
+    bool quick_exit = false;
 
     // Rows down. This is the row that would be at the top of the screen.
     HerixLib::FilePosition row_pos = 0;
@@ -118,6 +120,9 @@ class UIDisplay {
     // TODO: add function to get save listener count
 
     bool getShouldExit () const;
+
+    void setShouldQuickExit (bool val);
+    bool getShouldQuickExit () const;
 
     void setShouldExit(bool val);
 

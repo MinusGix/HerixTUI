@@ -129,6 +129,13 @@ void UIDisplay::setShouldExit(bool val) {
     should_exit = val;
 }
 
+void UIDisplay::setShouldQuickExit (bool val) {
+    quick_exit = val;
+}
+bool UIDisplay::getShouldQuickExit () const {
+    return quick_exit;
+}
+
 int UIDisplay::getLastPressedKey () {
     return key;
 }
@@ -382,6 +389,9 @@ void UIDisplay::setupSimpleLua () {
 
     lua.set_function("isDisplayableCharacter", isDisplayableCharacter);
     lua.set_function("isDisplayableCharacterLenient", isDisplayableCharacterLenient);
+
+    lua.set_function("setShouldQuickExit", &UIDisplay::setShouldQuickExit, this);
+    lua.set_function("getShouldQuickExit", &UIDisplay::getShouldQuickExit, this);
 
     // Information
     lua.set_function("getConfigPath", &UIDisplay::getConfigPath, this);
