@@ -1,3 +1,10 @@
+function inform_of_error (val)
+    logAtExit(val)
+    if getShouldQuickExit() == true then
+        error(val)
+    end
+end
+
 if highlighter_config == nil then
     highlighter_config = {}
 end
