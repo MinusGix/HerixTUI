@@ -628,6 +628,10 @@ end
 -- General Utility
 
 function fh_copy_table (tab)
+    if tab == nil then
+        inform_of_error("Table was nil")
+    end
+
     local ret = {}
     for k,v in pairs(tab) do
         if type(v) == "table" then
@@ -658,6 +662,10 @@ end
 -- If v1 is nil, it returns v2 and logs logMessage
 -- Otherwise returns v1
 function fh_log_or (v1, v2, logMessage)
+    if logMessage == nil then
+        inform_of_error("logMessage was nil")
+    end
+
     if v1 == nil then
         logAtExit(logMessage)
         return v2
@@ -672,6 +680,10 @@ end
 
 
 function fh_bytes_into_integer_le (bytes)
+    if bytes == nil then
+        inform_of_error("Bytes was nil")
+    end
+
     local ret = 0
     for index = #bytes, 1, -1 do
         ret = ret | (bytes[index] * (256^(index-1)))
@@ -679,6 +691,10 @@ function fh_bytes_into_integer_le (bytes)
     return ret
 end
 function fh_bytes_into_integer_be (bytes)
+    if bytes == nil then
+        inform_of_error("Bytes was nil")
+    end
+
     local ret = 0
     for index=1,#bytes do
         ret = ret | (bytes[index] * (256^(index-1)))
