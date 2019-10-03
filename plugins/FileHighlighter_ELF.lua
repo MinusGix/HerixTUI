@@ -249,6 +249,36 @@ fh_register_format({
                 },
 
                 {
+                    name = "dynamicsymboltable",
+                    type = "array",
+                    endian = sibling_endian,
+                    elements = function (structure, entry)
+                        local sections = fh_find_entry(structure, "sectionheadertable")
+
+                        entry["$user_symbols"] = {}
+                        for index=1, #sections["$data"] do
+                            local s_entry = sections["$data"][index]
+                            local s_struct = fh_get_entry__struct(s_entry)
+                            local s_type = fh_get_enum_entry_value(fh_find_entry(s_struct, "Type"))
+                            if s_type == "SHT_DYNSYM" then
+                                table.insert(entry["$user_symbols"], s_struct)
+                            end
+                        end
+                        return #entry["$user_symbols"]
+                    end,
+                    array = {
+                        type = "struct",
+                        struct = "SymbolTable",
+                        offset = function (structure, entry)
+                            local index = entry["$array_index"]
+                            local ind_struct = entry["$array"]["$user_symbols"][index]
+
+                            return fh_get_bytes_entry_value(fh_find_entry(ind_struct, "FileOffset"))
+                        end
+                    }
+                },
+
+                {
                     name = "stringtables",
                     type = "array",
                     elements = function (structure, entry)
