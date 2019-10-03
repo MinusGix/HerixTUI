@@ -162,10 +162,6 @@ function fh_initialize_entry__data (format, struct, entry, conf)
         error("File Highlighter: {" .. tostring(format.name) .. "} structure named " .. tostring(struct.name) .. "\n" ..
             "Has data entry with no size named " .. tostring(entry.name) .. ".")
     end
-
-    if entry.highlight == nil or entry.highlight == HighlightType.Auto then
-        entry.highlight = fh_next_highlight_method()
-    end
 end
 
 -- Parsing data, once it's been decided this is the format we're using
@@ -386,6 +382,9 @@ function fh_parse_entry___data (format, structure, entry, endian, offset, conf)
     entry["$name"] = entry.name
     entry["$size"] = fh_callif(entry.size, structure, entry)
     entry["$highlight"] = fh_callif(entry.highlight, structure, entry)
+    if entry["$highlight"] == nil or entry["$highlight"] == HighlightType.Auto then
+        entry["$highlight"] = fh_next_highlight_method()
+    end
 end
 
 -- Getting highlight information
@@ -525,7 +524,7 @@ function highlight_get (position, effectless)
         setBarMessage(bar_text)
     end
 
-    return ret.highlight
+    return ret["$highlight"]
 end
 
 function highlight_update (read_position, size, flush_cache)
