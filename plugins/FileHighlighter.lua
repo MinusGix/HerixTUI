@@ -1,3 +1,14 @@
+if file_highlighter_config == nil then
+    file_highlighter_config = {}
+end
+
+if file_highlighter_config.highlight_method == nil then
+    file_highlighter_config.highlight_method = {
+        HighlightType.Color_RED_BLACK,
+        HighlightType.Color_BLACK_RED
+    }
+end
+
 fh_data = {
     -- Key of the current format in fh_data.formats
     -- nil means it's not set
@@ -5,6 +16,8 @@ fh_data = {
     chosen_format = nil,
     formats = {},
     cached_pos = {},
+    method_index = 1,
+    highlight_method = file_highlighter_config.highlight_method
 }
 
 function fh_has_chosen_format ()
@@ -13,6 +26,17 @@ end
 
 function fh_get_chosen_format ()
     return fh_data.formats[fh_data.chosen_format]
+end
+
+function fh_next_highlight_method ()
+    local ret = fh_data.highlight_method[fh_data.method_index]
+    fh_data.method_index = fh_data.method_index + 1
+
+    if fh_data.method_index > #fh_data.highlight_method then
+        fh_data.method_index = 1
+    end
+
+    return ret
 end
 
 -- Clears everything
@@ -139,8 +163,8 @@ function fh_initialize_entry__data (format, struct, entry, conf)
             "Has data entry with no size named " .. tostring(entry.name) .. ".")
     end
 
-    if entry.highlight == nil then
-        entry.highlight = HighlightType.Standout
+    if entry.highlight == nil or entry.highlight == HighlightType.Auto then
+        entry.highlight = fh_next_highlight_method()
     end
 end
 

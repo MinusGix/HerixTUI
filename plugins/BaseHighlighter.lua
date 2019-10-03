@@ -11,9 +11,10 @@ end
 
 HighlightType = {
     None=0,
-    Underlined=1,
-    Standout=2,
-    Dim=3,
+    Auto=1,
+    Underlined=2,
+    Standout=3,
+    Dim=4,
 }
 
 
