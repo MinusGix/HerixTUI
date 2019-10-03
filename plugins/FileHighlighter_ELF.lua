@@ -1,3 +1,4 @@
+-- For use in anywhere the in the tree.
 local header_enum_option = function (enum_name, values)
     local tail_func
     tail_func = function (struct)
@@ -31,32 +32,18 @@ header_class_option = function (v1, v2)
         {"64-bit", v2}
     })
 end
--- For use in anywhere the in the tree.
 local header_class_pointer
 header_class_pointer = header_class_option(4, 8)
 
--- This is for entries in the header, since the endian is chosen in there, it can't be inherited easily
-local header_endian = function (structure, entry)
-    local endian_value = fh_get_enum_entry_value(fh_find_entry(structure, "Endian"))
-    if endian_value == "Little-Endian" then
-        return "Little"
-    else
-        return "Big"
-    end
+local header_endian_option
+header_endian_option = function (v1, v2)
+    return header_enum_option("Endian", {
+        {"Little-Endian", v1},
+        {"Big-Endian", v2}
+    })
 end
-
-local sibling_endian = function (structure, entry)
-    local header_struct = fh_get_entry__struct(fh_find_entry(structure, "header"))
-    local endian_value = fh_get_enum_entry_value(
-        fh_find_entry(header_struct, "Endian")
-    )
-
-    if endian_value == "Little-Endian" then
-        return "Little"
-    else
-        return "Big"
-    end
-end
+local header_endian_decide
+header_endian_decide = header_endian_option("Little", "Big")
 
 -- Yeah, this isn't perfect looking when displayed, but eh, it works good enough for now
 -- TODO: make this display nicer
@@ -155,7 +142,7 @@ fh_register_format({
                             fh_find_entry(header_struct, "ProgramHeaderTableEntries")
                         )
                     end,
-                    endian = sibling_endian,
+                    endian = header_endian_decide,
                     array = { -- an entry of what it is made up of.
                         type = "struct",
                         struct = header_class_option("ProgramHeader32", "ProgramHeader64")
@@ -177,7 +164,7 @@ fh_register_format({
                             fh_find_entry(header_struct, "SectionHeaderTableEntries")
                         )
                     end,
-                    endian = sibling_endian,
+                    endian = header_endian_decide,
                     array = {
                         type = "struct",
                         struct = "SectionHeader"
@@ -198,7 +185,7 @@ fh_register_format({
                 {
                     name = "notes",
                     type = "array",
-                    endian = sibling_endian,
+                    endian = header_endian_decide,
                     elements = function (structure, entry)
                         local phdr = fh_find_entry(structure, "programheadertable")
 
@@ -228,7 +215,7 @@ fh_register_format({
                 {
                     name = "symboltable",
                     type = "array",
-                    endian = sibling_endian,
+                    endian = header_endian_decide,
                     elements = function (structure, entry)
                         local sections = fh_find_entry(structure, "sectionheadertable")
 
@@ -258,7 +245,7 @@ fh_register_format({
                 {
                     name = "dynamicsymboltable",
                     type = "array",
-                    endian = sibling_endian,
+                    endian = header_endian_decide,
                     elements = function (structure, entry)
                         local sections = fh_find_entry(structure, "sectionheadertable")
 
@@ -312,7 +299,7 @@ fh_register_format({
                             return fh_get_bytes_entry_value(fh_find_entry(ind_struct, "FileOffset"))
                         end
                     },
-                    endian = sibling_endian
+                    endian = header_endian_decide
                 },
 
                 {
@@ -342,7 +329,7 @@ fh_register_format({
                             return fh_get_bytes_entry_value(fh_find_entry(ind_struct, "FileOffset"))
                         end
                     },
-                    endian = sibling_endian
+                    endian = header_endian_decide
                 }
             },
         },
@@ -446,7 +433,7 @@ fh_register_format({
                     type = 'enum',
                     size = 2,
                     highlight = HighlightType.Color_CYAN_BLACK,
-                    endian = header_endian,
+                    endian = header_endian_decide,
                     enum = {
                         [0] = "ET_NONE", -- no file type
                         [1] = "ET_REL", -- relocatable file
@@ -466,7 +453,7 @@ fh_register_format({
                     type = 'enum',
                     size = 2,
                     highlight = HighlightType.Color_MAGENTA_BLACK,
-                    endian = header_endian,
+                    endian = header_endian_decide,
                     enum = {
                         -- There is a _lot_ of EM_ values defined in elf.h...
                         [0] = "None", -- No machine
@@ -493,60 +480,60 @@ fh_register_format({
                     name = "ELFVersion",
                     size = 4,
                     highlight = HighlightType.Color_BLACK_WHITE,
-                    endian = header_endian,
+                    endian = header_endian_decide,
                 },
                 -- e_entry
                 {
                     name = "EntryPoint",
                     highlight = HighlightType.Underlined,
                     size = header_class_pointer,
-                    endian = header_endian,
+                    endian = header_endian_decide,
                 },
                 {
                     name = "ProgramHeaderTableOffset",
                     size = header_class_pointer,
-                    endian = header_endian,
+                    endian = header_endian_decide,
                 },
                 {
                     name = "SectionHeaderTableOffset",
                     size = header_class_pointer,
-                    endian = header_endian,
+                    endian = header_endian_decide,
                 },
                 {
                     name = "Flags",
                     size = 4,
-                    endian = header_endian,
+                    endian = header_endian_decide,
                 },
                 {
                     name = "SelfHeaderSize",
                     -- normally 64 bytes for 64 bit and 52 for 32-bit
                     size = 2,
-                    endian = header_endian,
+                    endian = header_endian_decide,
                 },
                 {
                     name = "ProgramHeaderTableEntrySize",
                     size = 2,
-                    endian = header_endian,
+                    endian = header_endian_decide,
                 },
                 {
                     name = "ProgramHeaderTableEntries",
                     size = 2,
-                    endian = header_endian,
+                    endian = header_endian_decide,
                 },
                 {
                     name = "SectionHeaderTableEntrySize",
                     size = 2,
-                    endian = header_endian,
+                    endian = header_endian_decide,
                 },
                 {
                     name = "SectionHeaderTableEntries",
                     size = 2,
-                    endian = header_endian,
+                    endian = header_endian_decide,
                 },
                 {
                     name = "SectionTableNamesEntryIndex",
                     size = 2,
-                    endian = header_endian,
+                    endian = header_endian_decide,
                 }
             }
         },
