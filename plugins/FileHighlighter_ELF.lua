@@ -1,5 +1,4 @@
-local header_class_option
-header_class_option = function (v1, v2)
+local header_enum_option = function (enum_name, values)
     local tail_func
     tail_func = function (struct)
         if struct == nil then
@@ -7,17 +6,30 @@ header_class_option = function (v1, v2)
         elseif struct.name == "$INIT" then
             return tail_func(fh_get_entry__struct(fh_find_entry(struct, "header")))
         elseif struct.name == "Header" then
-            if fh_get_enum_entry_value_be(fh_find_entry(struct, "Class")) == "32-bit" then
-                return v1
-            else
-                return v2
+            local value = fh_get_enum_entry_value(fh_find_entry(struct, enum_name))
+
+            for index=1, #values do
+                if values[index][1] == value then
+                    return values[index][2]
+                end
             end
+
+            logAtExit("header_enum_option failed.")
+            return nil
         else
             return tail_func(fh_get_structure_parent(struct))
         end
     end
 
     return tail_func
+end
+
+local header_class_option
+header_class_option = function (v1, v2)
+    return header_enum_option("Class", {
+        {"32-bit", v1},
+        {"64-bit", v2}
+    })
 end
 -- For use in anywhere the in the tree.
 local header_class_pointer
