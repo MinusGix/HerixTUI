@@ -1,5 +1,5 @@
-local header_option_function
-header_option_function = function (v1, v2)
+local header_class_option
+header_class_option = function (v1, v2)
     local tail_func
     tail_func = function (struct)
         if struct == nil then
@@ -20,8 +20,8 @@ header_option_function = function (v1, v2)
     return tail_func
 end
 -- For use in anywhere the in the tree.
-local header_pointer_function
-header_pointer_function = header_option_function(4, 8)
+local header_class_pointer
+header_class_pointer = header_class_option(4, 8)
 
 -- This is for entries in the header, since the endian is chosen in there, it can't be inherited easily
 local header_endian = function (structure, entry)
@@ -146,7 +146,7 @@ fh_register_format({
                     endian = sibling_endian,
                     array = { -- an entry of what it is made up of.
                         type = "struct",
-                        struct = header_option_function("ProgramHeader32", "ProgramHeader64")
+                        struct = header_class_option("ProgramHeader32", "ProgramHeader64")
                     },
                     offset = function (structure, entry)
                         local header_struct = fh_get_entry__struct(fh_find_entry(structure, "header"))
@@ -487,17 +487,17 @@ fh_register_format({
                 {
                     name = "EntryPoint",
                     highlight = HighlightType.Underlined,
-                    size = header_pointer_function,
+                    size = header_class_pointer,
                     endian = header_endian,
                 },
                 {
                     name = "ProgramHeaderTableOffset",
-                    size = header_pointer_function,
+                    size = header_class_pointer,
                     endian = header_endian,
                 },
                 {
                     name = "SectionHeaderTableOffset",
-                    size = header_pointer_function,
+                    size = header_class_pointer,
                     endian = header_endian,
                 },
                 {
@@ -658,7 +658,7 @@ fh_register_format({
                 },
                 {
                     name = "Flags",
-                    size = header_pointer_function,
+                    size = header_class_pointer,
                     text = function (struct, entry)
                         local flag = fh_get_bytes_entry_value(entry)
                         return FlagBuilder(flag, {
@@ -677,15 +677,15 @@ fh_register_format({
                 },
                 {
                     name = "VirtualAddress",
-                    size = header_pointer_function
+                    size = header_class_pointer
                 },
                 {
                     name = "FileOffset",
-                    size = header_pointer_function,
+                    size = header_class_pointer,
                 },
                 {
                     name = "Size", -- in bytes
-                    size = header_pointer_function
+                    size = header_class_pointer
                 },
                 {
                     name = "Link", -- to another section
@@ -697,11 +697,11 @@ fh_register_format({
                 },
                 {
                     name = "Alignment",
-                    size = header_pointer_function
+                    size = header_class_pointer
                 },
                 {
                     name = "EntrySize", -- Entry size if section holds table
-                    size = header_pointer_function
+                    size = header_class_pointer
                 }
             }
         },
@@ -773,11 +773,11 @@ fh_register_format({
             entries = {
                 {
                     name = "Offset", -- address
-                    size = header_pointer_function
+                    size = header_class_pointer
                 },
                 {
                     name = "Info", -- reloc type and symbol index
-                    size = header_pointer_function
+                    size = header_class_pointer
                 }
             }
         },
@@ -787,15 +787,15 @@ fh_register_format({
             entries = {
                 {
                     name = "Offset", -- address
-                    size = header_pointer_function
+                    size = header_class_pointer
                 },
                 {
                     name = "Info", -- reloc type and symbol index
-                    size = header_pointer_function
+                    size = header_class_pointer
                 },
                 {
                     name = "Addend",
-                    size = header_pointer_function
+                    size = header_class_pointer
                 }
             }
         },
@@ -805,14 +805,14 @@ fh_register_format({
             entries = {
                 {
                     name = "Tag",
-                    size = header_pointer_function
+                    size = header_class_pointer
                 },
                 {
                     -- Union, tag decides what it is
                     -- Value: represents ints with various interpretations
                     -- Pointer: represents program virtual addresses (??)
                     name = "Value/Pointer",
-                    size = header_pointer_function
+                    size = header_class_pointer
                 }
             }
         },
@@ -931,7 +931,7 @@ fh_register_format({
                     end,
                     array = {
                         type = "struct",
-                        struct = header_option_function("SymbolEntry32", "SymbolEntry64")
+                        struct = header_class_option("SymbolEntry32", "SymbolEntry64")
                     }
                 }
             }
