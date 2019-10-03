@@ -16,23 +16,30 @@ local sibling_pointer_function = function (struct, entry)
         return 8
     end
 end
+local header_option_function
+header_option_function = function (v1, v2)
+    local tail_func
+    tail_func = function (struct)
+        if struct == nil then
+            error("Header pointer function failed.")
+        elseif struct.name == "$INIT" then
+            return tail_func(fh_get_entry__struct(fh_find_entry(struct, "header")))
+        elseif struct.name == "Header" then
+            if fh_get_enum_entry_value_be(fh_find_entry(struct, "Class")) == "32-bit" then
+                return v1
+            else
+                return v2
+            end
+        else
+            return tail_func(fh_get_structure_parent(struct))
+        end
+    end
+
+    return tail_func
+end
 -- For use in anywhere the in the tree.
 local header_pointer_function
-header_pointer_function = function (struct)
-    if struct == nil then
-        error("Header pointer function failed.")
-    elseif struct.name == "$INIT" then
-        return header_pointer_function(fh_get_entry__struct(fh_find_entry(struct, "header")))
-    elseif struct.name == "Header" then
-        if fh_get_enum_entry_value_be(fh_find_entry(struct, "Class")) == "32-bit" then
-            return 4
-        else
-            return 8
-        end
-    else
-        return header_pointer_function(fh_get_structure_parent(struct))
-    end
-end
+header_pointer_function = header_option_function(4, 8)
 
 -- This is for entries in the header, since the endian is chosen in there, it can't be inherited easily
 local header_endian = function (structure, entry)
@@ -157,18 +164,7 @@ fh_register_format({
                     endian = sibling_endian,
                     array = { -- an entry of what it is made up of.
                         type = "struct",
-                        struct = function (structure, entry) -- struct would be $INIT, entry would be itself
-                            local header_struct = fh_get_entry__struct(fh_find_entry(structure, "header"))
-                            local class_value = fh_get_enum_entry_value(
-                                fh_find_entry(header_struct, "Class")
-                            )
-
-                            if class_value == "32-bit" then
-                                return "ProgramHeader32"
-                            else
-                                return "ProgramHeader64"
-                            end
-                        end
+                        struct = header_option_function("ProgramHeader32", "ProgramHeader64")
                     },
                     offset = function (structure, entry)
                         local header_struct = fh_get_entry__struct(fh_find_entry(structure, "header"))
@@ -953,20 +949,7 @@ fh_register_format({
                     end,
                     array = {
                         type = "struct",
-                        struct = function (structure, entry)
-                            local bitsize = fh_get_enum_entry_value(fh_find_entry(
-                                fh_get_entry__struct(
-                                    fh_find_entry(fh_get_structure_parent(structure), "header")
-                                ),
-                                "Class"
-                            ))
-
-                            if bitsize == "32-bit" then
-                                return "SymbolEntry32"
-                            else
-                                return "SymbolEntry64"
-                            end
-                        end,
+                        struct = header_option_function("SymbolEntry32", "SymbolEntry64")
                     }
                 }
             }
