@@ -1,21 +1,3 @@
--- For use in Header where 32-bit = 4 bytes and 64-bit = 8 bytes
-local pointer_function = function (struct, entry)
-    if fh_get_enum_entry_value_be(fh_find_entry(struct, "Class")) == "32-bit" then
-        return 4
-    else
-        return 8
-    end
-end
--- For use in siblings to Header, grabbing the $INIT and getting the header and getting it's bit size
-local sibling_pointer_function = function (struct, entry)
-    local parent = fh_get_structure_parent(struct)
-    local header = fh_get_entry__struct(fh_find_entry(parent, "header"))
-    if fh_get_enum_entry_value_be(fh_find_entry(header, "Class")) == "32-bit" then
-        return 4
-    else
-        return 8
-    end
-end
 local header_option_function
 header_option_function = function (v1, v2)
     local tail_func
@@ -505,17 +487,17 @@ fh_register_format({
                 {
                     name = "EntryPoint",
                     highlight = HighlightType.Underlined,
-                    size = pointer_function,
+                    size = header_pointer_function,
                     endian = header_endian,
                 },
                 {
                     name = "ProgramHeaderTableOffset",
-                    size = pointer_function,
+                    size = header_pointer_function,
                     endian = header_endian,
                 },
                 {
                     name = "SectionHeaderTableOffset",
-                    size = pointer_function,
+                    size = header_pointer_function,
                     endian = header_endian,
                 },
                 {
@@ -676,7 +658,7 @@ fh_register_format({
                 },
                 {
                     name = "Flags",
-                    size = sibling_pointer_function,
+                    size = header_pointer_function,
                     text = function (struct, entry)
                         local flag = fh_get_bytes_entry_value(entry)
                         return FlagBuilder(flag, {
@@ -695,15 +677,15 @@ fh_register_format({
                 },
                 {
                     name = "VirtualAddress",
-                    size = sibling_pointer_function
+                    size = header_pointer_function
                 },
                 {
                     name = "FileOffset",
-                    size = sibling_pointer_function,
+                    size = header_pointer_function,
                 },
                 {
                     name = "Size", -- in bytes
-                    size = sibling_pointer_function
+                    size = header_pointer_function
                 },
                 {
                     name = "Link", -- to another section
@@ -715,11 +697,11 @@ fh_register_format({
                 },
                 {
                     name = "Alignment",
-                    size = sibling_pointer_function
+                    size = header_pointer_function
                 },
                 {
                     name = "EntrySize", -- Entry size if section holds table
-                    size = sibling_pointer_function
+                    size = header_pointer_function
                 }
             }
         },
@@ -805,15 +787,15 @@ fh_register_format({
             entries = {
                 {
                     name = "Offset", -- address
-                    size = sibling_pointer_function
+                    size = header_pointer_function
                 },
                 {
                     name = "Info", -- reloc type and symbol index
-                    size = sibling_pointer_function
+                    size = header_pointer_function
                 },
                 {
                     name = "Addend",
-                    size = sibling_pointer_function
+                    size = header_pointer_function
                 }
             }
         },
@@ -823,14 +805,14 @@ fh_register_format({
             entries = {
                 {
                     name = "Tag",
-                    size = sibling_pointer_function
+                    size = header_pointer_function
                 },
                 {
                     -- Union, tag decides what it is
                     -- Value: represents ints with various interpretations
                     -- Pointer: represents program virtual addresses (??)
                     name = "Value/Pointer",
-                    size = sibling_pointer_function
+                    size = header_pointer_function
                 }
             }
         },
