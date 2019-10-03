@@ -331,6 +331,36 @@ fh_register_format({
                         end
                     },
                     endian = header_endian_decide
+                },
+
+                {
+                    name = "relocationappendentries",
+                    type = "array",
+                    elements = function (structure, entry)
+                        local sections = fh_find_entry(structure, "sectionheadertable")
+
+                        entry["$user_reloc"] = {}
+                        for index=1, #sections["$data"] do
+                            local s_entry = sections["$data"][index]
+                            local s_struct = fh_get_entry__struct(s_entry)
+                            local s_type = fh_get_enum_entry_value(fh_find_entry(s_struct, "Type"))
+                            if s_type == "SHT_RELA" then
+                                table.insert(entry["$user_reloc"], s_struct)
+                            end
+                        end
+                        return #entry["$user_reloc"]
+                    end,
+                    array = {
+                        type = "struct",
+                        struct = "RelocationAppendEntries",
+                        offset = function (structure, entry)
+                            local index = entry["$array_index"]
+                            local ind_struct = entry["$array"]["$user_reloc"][index]
+
+                            return fh_get_bytes_entry_value(fh_find_entry(ind_struct, "FileOffset"))
+                        end
+                    },
+                    endian = header_endian_decide
                 }
             },
         },
@@ -889,6 +919,31 @@ fh_register_format({
 
         {
             name = "RelocationEntries",
+            entries = {
+                {
+                    name = "Relocations",
+                    type = "array",
+                    elements = function (structure, entry)
+                        local index = structure["$entry"]["$array_index"]
+                        local ind_struct = structure["$entry"]["$array"]["$user_reloc"][index]
+
+                        if fh_get_bytes_entry_value(fh_find_entry(ind_struct, "FileOffset")) == 0 then
+                            return 0
+                        end
+
+                        return fh_get_bytes_entry_value(fh_find_entry(ind_struct, "Size")) //
+                            fh_get_bytes_entry_value(fh_find_entry(ind_struct, "EntrySize"))
+                    end,
+                    array = {
+                        type = "struct",
+                        struct = "Relocation"
+                    }
+                }
+            }
+        },
+
+        {
+            name = "RelocationAppendEntries",
             entries = {
                 {
                     name = "Relocations",
