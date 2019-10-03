@@ -237,34 +237,8 @@ fh_register_format({
                         return #entry["$user_symbols"]
                     end,
                     array = {
-                        type = "array",
-                        elements = function (structure, entry)
-                            local index = entry["$array_index"]
-                            local ind_struct = entry["$array"]["$user_symbols"][index]
-                            -- Offset is 0, so no elements.
-                            if fh_get_bytes_entry_value(fh_find_entry(ind_struct, "FileOffset")) == 0 then
-                                return 0
-                            end
-
-                            return fh_get_bytes_entry_value(fh_find_entry(ind_struct, "Size")) //
-                                fh_get_bytes_entry_value(fh_find_entry(ind_struct, "EntrySize"))
-                        end,
-                        array = {
-                            type = "struct",
-                            struct = function (structure, entry)
-                                local bitsize = fh_get_enum_entry_value(
-                                    fh_find_entry(
-                                        fh_get_entry__struct(fh_find_entry(structure, "header")),
-                                        "Class"
-                                ))
-
-                                if bitsize == "32-bit" then
-                                    return "SymbolEntry32"
-                                else
-                                    return "SymbolEntry64"
-                                end
-                            end,
-                        },
+                        type = "struct",
+                        struct = "SymbolTable",
                         offset = function (structure, entry)
                             local index = entry["$array_index"]
                             local ind_struct = entry["$array"]["$user_symbols"][index]
@@ -854,6 +828,44 @@ fh_register_format({
                         end
                         return "'" .. ret .. "'"
                     end
+                }
+            }
+        },
+
+        {
+            name = "SymbolTable",
+            entries = {
+                {
+                    name = "Symbols",
+                    type = "array",
+                    elements = function (structure, entry)
+                        local index = structure["$entry"]["$array_index"]
+                        local ind_struct = structure["$entry"]["$array"]["$user_symbols"][index]
+
+                        if fh_get_bytes_entry_value(fh_find_entry(ind_struct, "FileOffset")) == 0 then
+                            return 0
+                        end
+
+                        return fh_get_bytes_entry_value(fh_find_entry(ind_struct, "Size")) //
+                            fh_get_bytes_entry_value(fh_find_entry(ind_struct, "EntrySize"))
+                    end,
+                    array = {
+                        type = "struct",
+                        struct = function (structure, entry)
+                            local bitsize = fh_get_enum_entry_value(fh_find_entry(
+                                fh_get_entry__struct(
+                                    fh_find_entry(fh_get_structure_parent(structure), "header")
+                                ),
+                                "Class"
+                            ))
+
+                            if bitsize == "32-bit" then
+                                return "SymbolEntry32"
+                            else
+                                return "SymbolEntry64"
+                            end
+                        end,
+                    }
                 }
             }
         },
