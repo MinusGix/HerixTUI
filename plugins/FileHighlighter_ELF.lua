@@ -114,11 +114,12 @@ fh_register_format({
     verifier = function ()
         -- FIXME: this is rather simplistic, simply checking for the elf beginning header
         if hasByte(0) and hasByte(1) and hasByte(2) and hasByte(3) then
-            local m0 = readByte(0)
-            local m1 = readByte(1)
-            local m2 = readByte(2)
-            local m3 = readByte(3)
-            return m0 == 0x7F and m1 == 0x45 and m2 == 0x4c and m3 == 0x46
+            local b = readBytes(0, 4)
+
+            if #b < 4 then
+                return false
+            end
+            return b[1] == 0x7F and b[2] == 0x45 and b[3] == 0x4c and b[4] == 0x46
         end
         return false
     end,
