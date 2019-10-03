@@ -5,7 +5,11 @@ end
 if file_highlighter_config.highlight_method == nil then
     file_highlighter_config.highlight_method = {
         HighlightType.Color_RED_BLACK,
-        HighlightType.Color_BLACK_RED
+        HighlightType.Color_BLACK_RED,
+        HighlightType.Color_BLUE_BLACK,
+        HighlightType.Color_BLACK_BLUE,
+        HighlightType.Color_YELLOW_BLACK,
+        HighlightType.Color_BLACK_YELLOW
     }
 end
 
