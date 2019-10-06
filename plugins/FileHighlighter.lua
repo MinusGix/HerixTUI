@@ -320,7 +320,7 @@ function fh_parse_entry__string (format, structure, entry, endian, offset, conf)
             for index=1, #bytes do
                 local byte = bytes[index]
                 if isDisplayableCharacter(byte) then
-                    ret = ret .. string.char(byte0)
+                    ret = ret .. string.char(byte)
                 else
                     ret = ret .. "."
                 end
