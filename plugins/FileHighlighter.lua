@@ -626,6 +626,7 @@ function fh_get_bytes_entry_bytes (bytes_entry)
     return bytes
 end
 function fh_get_bytes_entry_value (bytes_entry)
+    logAtExit("Endian: " .. bytes_entry["$endian"])
     if bytes_entry["$endian"] == "Unknown" or bytes_entry["$endian"] == "Big" then
         return fh_get_bytes_entry_value_be(bytes_entry)
     else
@@ -723,8 +724,9 @@ function fh_bytes_into_integer_be (bytes)
     end
 
     local ret = 0
-    for index=1,#bytes do
-        ret = ret | (bytes[index] * (256^(index-1)))
+    local len = #bytes
+    for index=1,len do
+        ret = ret | (bytes[index] * (256^((len-index+1)-1)))
     end
     return ret
 end
