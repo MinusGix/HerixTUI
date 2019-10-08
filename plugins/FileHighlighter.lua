@@ -118,7 +118,7 @@ function fh_initialize_entry (format, struct, entry, conf)
         fh_initialize_entry__string_null(format, struct, entry, conf)
     elseif entry.type == "string" then
         fh_initialize_entry__string(format, struct, entry, conf)
-    elseif entry.type == "bytes" or entry.type == "padding" then
+    elseif entry.type == "bytes" or entry.type == "padding" or entry.type == "int" then
         fh_initialize_entry__data(format, struct, entry, conf)
     else
         error("File Highlighter: {" .. tostring(format.name) .. "} structure named " .. tostring(struct.name) .. "\n" ..
@@ -232,6 +232,8 @@ function fh_parse_entry (format, structure, entry, endian, offset, conf)
         fh_parse_entry__string_null(format, structure, entry, entry["$endian"], offset, conf)
     elseif entry.type == "string" then
         fh_parse_entry__string(format, structure, entry, entry["$endian"], offset, conf)
+    elseif entry.type == "int" then
+        fh_parse_entry__int(format, structure, entry, entry["$endian"], offset, conf)
     elseif entry.type == "padding" then
         fh_parse_entry__padding(format, structure, entry, entry["$endian"], offset, conf)
     elseif entry.type == "enum" then
@@ -375,6 +377,15 @@ function fh_parse_entry__string_null (format, structure, entry, endian, offset, 
         end
     end
 end
+function fh_parse_entry__int (format, structure, entry, endian, offset, conf)
+    fh_parse_entry___data(format, structure, entry, entry["$endian"], offset, conf)
+
+    if entry.text == nil then
+        entry.text = function (struct, entry)
+            return fh_get_bytes_entry_value(entry)
+        end
+    end
+end
 function fh_parse_entry__bytes (format, structure, entry, endian, offset, conf)
     fh_parse_entry___data(format, structure, entry, entry["$endian"], offset, conf)
 end
@@ -428,7 +439,7 @@ function fh_get_highlight_entry (format, structure, entry, position, conf)
     -- But it is assured to be a child eventually of the structure.
 
     if entry.type == "bytes" or entry.type == "padding" or entry.type == "enum" or entry.type == "string-null"
-        or entry.type == "string" then
+        or entry.type == "string" or entry.type == "int" then
         return fh_get_highlight_entry__data(format, structure, entry, position, conf)
     elseif entry.type == "array" then
         return fh_get_highlight_entry__array(format, structure, entry, position, conf)
