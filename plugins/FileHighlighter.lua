@@ -740,3 +740,20 @@ function fh_bytes_into_integer_be (bytes)
     end
     return ret
 end
+
+-- Index starts from right
+function fh_byte_extract_bit (byte, index)
+    if byte == nil then
+        inform_of_error("byte was nil")
+    end
+
+    if index == nil then
+        inform_of_error("index was nil")
+    end
+
+    if index > 7 or index < 0 then
+        inform_of_error("index was out of bounds: '" .. tostring(index) .. "'")
+    end
+
+    return (byte & (1 << index)) ~= 0
+end
