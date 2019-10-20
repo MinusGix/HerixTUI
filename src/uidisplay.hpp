@@ -25,6 +25,7 @@ class UIDisplay {
         "PLUGIN_DIR .. \"/FileHighlighter.lua\","
         "PLUGIN_DIR .. \"/FileHighlighter_ELF.lua\","
         "PLUGIN_DIR .. \"/FileHighlighter_PNG.lua\","
+        "PLUGIN_DIR .. \"/FileHighlighter_GIF.lua\","
         "PLUGIN_DIR .. \"/HexWrite.lua\""
     "}";
 
