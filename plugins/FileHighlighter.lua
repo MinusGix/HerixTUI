@@ -49,9 +49,7 @@ end
 function fh_flush_cache ()
     fh_data.cached_pos = {}
     -- Reparse, this should overwrite any previous values.
-    if fh_data.chosen_format ~= nil and fh_data.chosen_format ~= 0 then
-        fh_parse_format(fh_get_chosen_format())
-    end
+    fh_choose_format()
 end
 
 -- Initializing and registering format
