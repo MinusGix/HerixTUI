@@ -185,6 +185,10 @@ function fh_parse_structure (format, structure, endian, offset, conf)
     structure["$contig_size"] = 0
     structure["$endian"] = fh_callif(fh_or(structure.endian, endian), structure)
 
+    if structure["$endian"] ~= "Unknown" and structure["$endian"] ~= "Big" and structure["$endian"] ~= "Little" then
+        error("Endian was invalid.")
+    end
+
     if type(structure.pre) == "function" then
         structure.pre(structure, endian, offset, conf)
     end
@@ -217,6 +221,14 @@ function fh_parse_entry (format, structure, entry, endian, offset, conf)
     entry["$offset"] = fh_callif(fh_or(entry.offset, offset), structure, entry)
     entry["$parent_structure"] = structure
     entry["$endian"] = fh_callif(fh_or(entry.endian, endian), structure, entry)
+
+    if type(entry["$offset"]) ~= "number" then
+        error("Offset was not a number.")
+    end
+
+    if entry["$endian"] ~= "Unknown" and entry["$endian"] ~= "Big" and entry["$endian"] ~= "Little" then
+        error("Endian was invalid.")
+    end
 
     if type(entry.pre) == "function" then
         entry.pre(structure, entry, endian, offset, conf)
@@ -264,7 +276,9 @@ function fh_parse_entry__array (format, structure, entry, offset, conf)
 
     offset = entry["$offset"]
 
-    -- TODO: add checks
+    if type(entry["$size_limit"]) ~= "number" and type(entry["$elements"]) ~= "number" then
+        error("Array, both size limit and elements was invalid. Name: " .. tostring(entry["name"]))
+    end
 
     -- Rather than a for loop we use this, because the condition is a bit complex..
     local index = 0
