@@ -545,7 +545,7 @@ function highlight_update (read_position, size, flush_cache)
         fh_choose_format()
     end
 
-    if flush_cache then
+    if flush_cache and fh_data.chosen_format ~= 0 then
         logAtExit("Flushing cache..")
         fh_flush_cache()
     end
