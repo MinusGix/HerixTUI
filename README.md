@@ -4,6 +4,9 @@ A terminal interface over Hex Editor library written in C++. (See: https://githu
 
 Currently the code is only tested on Linux, but it would be good to support Windows and MacOS.
 
+Installation:  
+`git clone --recurse-submodules https://github.com/MinusGix/HerixTUI.git`
+
 ## Configuration
 It first looks at the `$XDG_CONFIG_HOME` environment variable, and then `$HOME` for `herixtui.lua` which is the name of the configuration file.
 A custom one can be passed in with the `-c` parameter.
