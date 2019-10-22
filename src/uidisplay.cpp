@@ -9,7 +9,7 @@ HerixLib::ChunkSize UIDisplay::getMaxChunkSize () {
 }
 
 
-UIDisplay::UIDisplay (std::filesystem::path t_filename, std::filesystem::path t_config_file, std::filesystem::path t_plugins_directory, bool t_debug) {
+UIDisplay::UIDisplay (std::filesystem::path t_filename, std::filesystem::path t_config_file, std::filesystem::path t_plugins_directory, bool t_allow_writing, bool t_debug) {
     debug = t_debug;
     plugins_directory = t_plugins_directory;
     config_path = t_config_file;
@@ -40,7 +40,7 @@ UIDisplay::UIDisplay (std::filesystem::path t_filename, std::filesystem::path t_
         }
     }
 
-    hex = HerixLib::Herix(t_filename, getMaxChunkMemory(), getMaxChunkSize());
+    hex = HerixLib::Herix(t_filename, t_allow_writing, getMaxChunkMemory(), getMaxChunkSize());
 
     setupBar();
     setupView();
@@ -962,7 +962,9 @@ bool UIDisplay::hasUnsavedChanges () const {
 }
 
 void UIDisplay::handleSave () {
-    if (hasUnsavedChanges()) {
+    if (!hex.allow_writing) {
+        setBarMessage("Cannot save in read only mode.");
+    } else if (hasUnsavedChanges()) {
         bar_asking = UIBarAsking::ShouldSave;
     } else {
         setBarMessage("No changes to save.");

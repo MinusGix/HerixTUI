@@ -97,7 +97,7 @@ class UIDisplay {
     HerixLib::ChunkSize getMaxChunkSize ();
 
 
-    UIDisplay (std::filesystem::path t_filename, std::filesystem::path t_config_file, std::filesystem::path t_plugins_directory, bool t_debug);
+    UIDisplay (std::filesystem::path t_filename, std::filesystem::path t_config_file, std::filesystem::path t_plugins_directory, bool t_allow_writing, bool t_debug);
 
     ~UIDisplay ();
 

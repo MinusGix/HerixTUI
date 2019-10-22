@@ -38,6 +38,7 @@ int main (int argc, char** argv) {
         ("locate_config", "Find where the code looks for the config")
         ("p,plugin_dir", "Set where plugins are looked for.", cxxopts::value<std::string>())
         ("locate_plugins", "Find where the code looks for plugins")
+        ("w,no_writing", "Disallows writing to the file. Needed for files which are not writable.")
         ("d,debug", "Turn on debug mode.")
         ;
 
@@ -81,9 +82,6 @@ int main (int argc, char** argv) {
         return 0;
     }
 
-
-
-
     std::filesystem::path filename = getFilename(argc, argv);
     // TODO: allow creation of empty file to edit in
     if (filename == "") {
@@ -91,9 +89,14 @@ int main (int argc, char** argv) {
         return 0;
     }
 
+    bool allow_writing = true;
+    if (result.count("no_writing") != 0) {
+        allow_writing = false;
+    }
+
     setupCurses();
     try {
-        UIDisplay display = UIDisplay(filename, config_file, plugin_dir, debug_mode);
+        UIDisplay display = UIDisplay(filename, config_file, plugin_dir, allow_writing, debug_mode);
 
         refresh();
 
