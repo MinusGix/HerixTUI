@@ -131,6 +131,27 @@ std::string byteToString (HerixLib::Byte byte);
 std::string byteToStringPadded (HerixLib::Byte byte);
 char hexChr (HerixLib::Byte v);
 HerixLib::Byte hexChrToNumber (char c);
+template<typename T>
+T hexToNumber (const std::string& str) {
+    T acc = 0;
+    for (char c : str) {
+        acc *= 16;
+        acc += static_cast<T>(hexChrToNumber(c));
+    }
+    return acc;
+}
+template<typename T>
+T decToNumber (const std::string& str) {
+    T acc = 0;
+    for (char c : str) {
+        if (c < 48 || c > 57) {
+            throw std::runtime_error("decToNumber got invalid decimal string.");
+        }
+        acc *= 10;
+        acc += static_cast<T>(c - 48);
+    }
+    return acc;
+}
 bool isHexadecimalCharacter (int c);
 bool isHexadecimalCharacter (char c);
 HerixLib::Byte clearHighestHalfByte (HerixLib::Byte val);

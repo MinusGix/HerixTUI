@@ -39,8 +39,8 @@ int main (int argc, char** argv) {
         ("p,plugin_dir", "Set where plugins are looked for.", cxxopts::value<std::string>())
         ("locate_plugins", "Find where the code looks for plugins")
         ("w,no_writing", "Disallows writing to the file. Needed for files which are not writable.")
-        ("s,start", "The start position in the file, restricts editing to after this.", cxxopts::value<size_t>())
-        ("e,end", "The end position in the file, restricts editing to before this.", cxxopts::value<size_t>())
+        ("s,start", "The start position in the file, restricts editing to after this.", cxxopts::value<std::string>())
+        ("e,end", "The end position in the file, restricts editing to before this.", cxxopts::value<std::string>())
         ("d,debug", "Turn on debug mode.")
         ;
 
@@ -96,18 +96,28 @@ int main (int argc, char** argv) {
         allow_writing = false;
     }
 
-    size_t start_position = 0;
+    AbsoluteFilePosition start_position = 0;
     if (result.count("start") > 1) {
         throw std::runtime_error("Start specified more than once.");
     } else if (result.count("start") == 1) {
-        start_position = result["start"].as<size_t>();
+        std::string temp_start = result["start"].as<std::string>();
+        if (temp_start.size() >= 2 && temp_start.at(0) == '0' && temp_start.at(1) == 'x') {
+            start_position = hexToNumber<AbsoluteFilePosition>(temp_start.substr(2));
+        } else {
+            start_position = decToNumber<AbsoluteFilePosition>(temp_start);
+        }
     }
 
     std::optional<size_t> end_position = std::nullopt;
     if (result.count("end") > 1) {
         throw std::runtime_error("End specified more than once.");
     } else if (result.count("end") == 1) {
-        end_position = std::make_optional(result["end"].as<size_t>());
+        std::string temp_end = result["end"].as<std::string>();
+        if (temp_end.size() >= 2 && temp_end.at(0) == '0' && temp_end.at(1) == 'x') {
+            end_position = std::make_optional(hexToNumber<AbsoluteFilePosition>(temp_end.substr(2)));
+        } else {
+            end_position = std::make_optional(decToNumber<AbsoluteFilePosition>(temp_end));
+        }
     }
 
     std::cout << "S: " << start_position << "\n";
