@@ -52,7 +52,7 @@ fh_register_format({
                         struct = "Chunk"
                     },
                     size_limit = function (structure, entry)
-                        return getFileSize() - 1 - 3 - 2 - 1 - 1
+                        return getFileEnd() - 1 - 3 - 2 - 1 - 1
                     end
                 }
             }

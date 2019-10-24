@@ -39,6 +39,8 @@ int main (int argc, char** argv) {
         ("p,plugin_dir", "Set where plugins are looked for.", cxxopts::value<std::string>())
         ("locate_plugins", "Find where the code looks for plugins")
         ("w,no_writing", "Disallows writing to the file. Needed for files which are not writable.")
+        ("s,start", "The start position in the file, restricts editing to after this.", cxxopts::value<size_t>())
+        ("e,end", "The end position in the file, restricts editing to before this.", cxxopts::value<size_t>())
         ("d,debug", "Turn on debug mode.")
         ;
 
@@ -94,9 +96,32 @@ int main (int argc, char** argv) {
         allow_writing = false;
     }
 
+    size_t start_position = 0;
+    if (result.count("start") > 1) {
+        throw std::runtime_error("Start specified more than once.");
+    } else if (result.count("start") == 1) {
+        start_position = result["start"].as<size_t>();
+    }
+
+    std::optional<size_t> end_position = std::nullopt;
+    if (result.count("end") > 1) {
+        throw std::runtime_error("End specified more than once.");
+    } else if (result.count("end") == 1) {
+        end_position = std::make_optional(result["end"].as<size_t>());
+    }
+
+    std::cout << "S: " << start_position << "\n";
+    std::cout << "E: ";
+    if (end_position.has_value()) {
+        std::cout << end_position.value();
+    } else {
+        std:: cout << "No Value";
+    }
+    std::cout << "\n";
+
     setupCurses();
     try {
-        UIDisplay display = UIDisplay(filename, config_file, plugin_dir, allow_writing, debug_mode);
+        UIDisplay display = UIDisplay(filename, config_file, plugin_dir, allow_writing, std::make_pair(start_position, end_position), debug_mode);
 
         refresh();
 

@@ -9,7 +9,7 @@ HerixLib::ChunkSize UIDisplay::getMaxChunkSize () {
 }
 
 
-UIDisplay::UIDisplay (std::filesystem::path t_filename, std::filesystem::path t_config_file, std::filesystem::path t_plugins_directory, bool t_allow_writing, bool t_debug) {
+UIDisplay::UIDisplay (std::filesystem::path t_filename, std::filesystem::path t_config_file, std::filesystem::path t_plugins_directory, bool t_allow_writing, std::pair<HerixLib::AbsoluteFilePosition, std::optional<HerixLib::AbsoluteFilePosition>> file_range, bool t_debug) {
     debug = t_debug;
     plugins_directory = t_plugins_directory;
     config_path = t_config_file;
@@ -40,7 +40,7 @@ UIDisplay::UIDisplay (std::filesystem::path t_filename, std::filesystem::path t_
         }
     }
 
-    hex = HerixLib::Herix(t_filename, t_allow_writing, getMaxChunkMemory(), getMaxChunkSize());
+    hex = HerixLib::Herix(t_filename, t_allow_writing, file_range, getMaxChunkMemory(), getMaxChunkSize());
 
     setupBar();
     setupView();
@@ -180,12 +180,12 @@ std::string UIDisplay::getBarMessage () {
 }
 
 // TODO: make this invalidate the cache if the file is saved.
-size_t UIDisplay::getFileSize () {
-    if (cached_file_size.has_value()) {
-        return cached_file_size.value();
+size_t UIDisplay::getFileEnd () {
+    if (cached_file_end.has_value()) {
+        return cached_file_end.value();
     } else {
-        cached_file_size = hex.getFileSize();
-        return cached_file_size.value();
+        cached_file_end = hex.getFileEnd();
+        return cached_file_end.value();
     }
 }
 
@@ -440,7 +440,7 @@ void UIDisplay::setupLuaValues () {
     lua.set_function("getViewX", &UIDisplay::getViewX, this);
     lua.set_function("getViewY", &UIDisplay::getViewY, this);
 
-    lua.set_function("getFileSize", &UIDisplay::getFileSize, this);
+    lua.set_function("getFileEnd", &UIDisplay::getFileEnd, this);
 
     lua.set_function("getRowOffset", &UIDisplay::getRowOffset, this);
 
@@ -646,7 +646,7 @@ void UIDisplay::saveFile () {
 }
 
 void UIDisplay::invalidateCaches () {
-    cached_file_size = std::nullopt;
+    cached_file_end = std::nullopt;
 }
 
 void UIDisplay::listenForUndo (sol::protected_function cb) {
@@ -847,7 +847,7 @@ void UIDisplay::handleEvent () {
 
 void UIDisplay::handleDownKeyMovement () {
     HerixLib::FilePosition byte_count = static_cast<HerixLib::FilePosition>(view.getHexByteWidth());
-    if (sel_pos + byte_count < getFileSize()) {
+    if (sel_pos + byte_count < getFileEnd()) {
         sel_pos += byte_count;
     }
 }
@@ -855,7 +855,7 @@ void UIDisplay::handleDownKeyMovement () {
 void UIDisplay::handlePageDownMovement () {
     HerixLib::FilePosition page_size = static_cast<HerixLib::FilePosition>(view.getHexByteWidth()) *
         static_cast<HerixLib::FilePosition>(view.getHexHeight());
-    if (sel_pos + page_size < getFileSize()) {
+    if (sel_pos + page_size < getFileEnd()) {
         // This is a bit of a hacky method to make the our cursor be at the top when we page down
         // Go double the page length (since we aren't accessing anything it doesn't matter if we go outside the file)
         sel_pos += page_size * 2;
@@ -899,7 +899,7 @@ void UIDisplay::handleLeftKeyEditingMovement () {
 }
 
 void UIDisplay::handleRightKeyMovement () {
-    if (sel_pos+1 < getFileSize()) {
+    if (sel_pos+1 < getFileEnd()) {
         sel_pos++;
     }
 }
@@ -914,7 +914,7 @@ void UIDisplay::handleRightKeyEditingMovement () {
 }
 
 void UIDisplay::handleJumpEndOfFile () {
-    sel_pos = getFileSize() - 1;
+    sel_pos = getFileEnd() - 1;
 }
 
 void UIDisplay::handleJumpEndOfLine () {
@@ -926,8 +926,8 @@ void UIDisplay::handleJumpEndOfLine () {
         sel_pos = (hex_byte_width - (sel_pos % hex_byte_width)) + sel_pos - 1;
     }
 
-    if (sel_pos >= getFileSize()) {
-        sel_pos = getFileSize() - 1;
+    if (sel_pos >= getFileEnd()) {
+        sel_pos = getFileEnd() - 1;
     }
 }
 void UIDisplay::handleJumpStartOfLine () {

@@ -89,7 +89,7 @@ class UIDisplay {
     std::vector<sol::protected_function> on_init;
 
 
-    std::optional<size_t> cached_file_size = std::nullopt;
+    std::optional<size_t> cached_file_end = std::nullopt;
     bool should_edit_move_forward = true;
 
     // Note: these two functions should be ignored after initialization!
@@ -97,7 +97,7 @@ class UIDisplay {
     HerixLib::ChunkSize getMaxChunkSize ();
 
 
-    UIDisplay (std::filesystem::path t_filename, std::filesystem::path t_config_file, std::filesystem::path t_plugins_directory, bool t_allow_writing, bool t_debug);
+    UIDisplay (std::filesystem::path t_filename, std::filesystem::path t_config_file, std::filesystem::path t_plugins_directory, bool t_allow_writing, std::pair<HerixLib::AbsoluteFilePosition, std::optional<HerixLib::AbsoluteFilePosition>> file_range, bool t_debug);
 
     ~UIDisplay ();
 
@@ -146,7 +146,7 @@ class UIDisplay {
     void clearBarMessage ();
     std::string getBarMessage ();
 
-    size_t getFileSize ();
+    size_t getFileEnd ();
 
     size_t createSubView (ViewLocation loc);
     SubView& getSubView (size_t id);
